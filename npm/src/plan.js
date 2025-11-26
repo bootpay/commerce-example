@@ -199,6 +199,7 @@ function selectPlan(planKey) {
         price: price,
         redirect_url: window.location.origin + '/src/result.html',
         usage_api_url: 'https://dev-api.bootapi.com/v1/billing/usage',
+        // use_notification: true,
         use_auto_login: true,
         request_id: `plan_${planKey}_${Date.now()}`,
         products: [
