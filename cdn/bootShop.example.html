@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BootpayEx Shop Example</title>
+    <script src="https://js.bootpay.co.kr/bootpay-store-5.1.4.min.js" type="application/javascript"></script>
+    <script src="https://js.bootpay.co.kr/bootpay-5.1.4.min.js" type="application/javascript"></script>
+    <script type="module">
+
+      
+        const renderBootpayEx = (tryCount = 0) => {
+                window.BootpayStore.setEnvironmentMode("development");
+		window.BootpayStore.render('#bootpay-shop', {
+                        //client_key: "LLJHLYLXQX_J5ZHdgV_OvA",
+                        client_key: "4T4tlQq2xpPHioq216K-RQ",
+                        extra: {
+                            window: {
+                                width: '100%', 
+                                fullscreen: true
+                            }
+                        },
+                        hooks: {
+                            onReady: () => {
+                                // 렌더링이 완료되면 실행되는 이벤트입니다.
+                                // 특정 고객으로 로그인하기 원할 경우, 고객 로그인 토큰을 전달합니다.
+                                //const token = "발급받은 고객 토큰"
+                                //window.BootpayStore.sendEvent('updateUserSession', token)
+                            }
+                        },
+                    });
+            // window.BootpayStore.sendEvent('updateUserSession',  token)
+            
+        };
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            renderBootpayEx();
+        });
+    </script>
+</head>
+<body>
+    <div id="bootpay-shop" style="width: 100%; height: 1000px; border: 1px solid #ccc;">
+        <!-- BootpayEx가 렌더링될 컨테이너 -->
+    </div>
+</body>
+</html>

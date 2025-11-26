@@ -1,0 +1,19 @@
+{
+  "name": "bootpay-commerce-example",
+  "version": "1.0.0",
+  "description": "Bootpay Commerce SDK Example with npm",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@bootpay/bp-commerce-sdk": "^1.0.1-beta.4",
+    "@bootpay/client-js": "^5.1.5",
+    "@bootpay/backend-js": "2.3.6"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
