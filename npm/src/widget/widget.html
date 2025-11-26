@@ -187,11 +187,17 @@
             align-items: center;
             gap: 12px;
         }
-        .mileage-checkbox {
-            width: 20px;
-            height: 20px;
-            accent-color: #11998e;
-            cursor: pointer;
+        .mileage-input {
+            width: 100px;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: right;
+        }
+        .mileage-input:focus {
+            outline: none;
+            border-color: #11998e;
         }
         .mileage-label {
             flex: 1;
@@ -527,9 +533,11 @@
                 <div class="section-title">🎁 할인 적용</div>
 
                 <div class="mileage-row">
-                    <input type="checkbox" id="use-mileage" class="mileage-checkbox" onchange="toggleMileage()">
                     <label for="use-mileage" class="mileage-label">적립금 사용</label>
-                    <span class="mileage-amount">3,000원 보유</span>
+                    <input type="number" id="use-mileage" class="mileage-input"
+                           min="0" max="3000" step="100" value="0"
+                           oninput="applyMileage(this.value)">
+                    <span class="mileage-amount">/ 3,000원 보유</span>
                 </div>
 
                 <div class="coupon-row">

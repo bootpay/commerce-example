@@ -1,8 +1,12 @@
 // NPM 패키지에서 import
 import { BootpayWidget } from '@bootpay/client-js'
 
+// API 서버 주소
+const API_BASE_URL = 'http://localhost:3001'
+
 // 주문 정보
 const orderInfo = {
+    productId: 'premium_earphone',  // 상품 ID (서버에서 가격 조회용)
     unitPrice: 39000,
     quantity: 1,
     mileageDiscount: 0,
@@ -203,13 +207,24 @@ function changeQuantity(delta) {
 // 적립금 적용
 // ========================================
 
-function toggleMileage() {
-    const checkbox = document.getElementById('use-mileage')
-    orderInfo.mileageDiscount = checkbox.checked ? 3000 : 0
+const MAX_MILEAGE = 3000  // 보유 적립금
+
+function applyMileage(value) {
+    const input = document.getElementById('use-mileage')
+    let amount = parseInt(value) || 0
+
+    // 범위 제한 (0 ~ 보유 적립금)
+    if (amount < 0) amount = 0
+    if (amount > MAX_MILEAGE) amount = MAX_MILEAGE
+
+    // 입력값 보정
+    input.value = amount
+
+    orderInfo.mileageDiscount = amount
     updatePriceDisplay()
 
-    if (checkbox.checked) {
-        showToast('적립금 3,000원이 적용되었습니다.', 'success')
+    if (amount > 0) {
+        showToast(`적립금 ${amount.toLocaleString()}원이 적용되었습니다.`, 'success')
     }
 }
 
@@ -281,30 +296,43 @@ async function requestPayment() {
         // ------ STEP 3. 결제 요청 ------
 
         // 3-1. 가맹점 서버 호출 (주문 생성)
-        // 실제 환경에서는 서버 API를 호출하여 주문을 생성합니다.
-        // 서버에서 금액을 직접 계산하여 위변조를 방지합니다.
+        // ⭐ 중요: 서버에서 금액을 계산하여 위변조 방지
+        // 클라이언트가 보낸 금액을 신뢰하지 않고, 상품ID/수량/쿠폰 등만 전달
         console.log('서버에 주문 생성 요청...')
 
-        // 데모를 위한 모의 서버 응답
-        const orderData = await mockCreateOrder({
-            order_name: '프리미엄 무선 이어폰 Pro Max',
-            quantity: orderInfo.quantity,
-            mileage_amount: orderInfo.mileageDiscount,
-            coupon_code: orderInfo.couponCode,
-            payment_method: BootpayWidget.currentPaymentParameters()
+        const paymentParams = BootpayWidget.currentPaymentParameters()
+
+        const orderResponse = await fetch(`${API_BASE_URL}/api/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                product_id: orderInfo.productId,      // 상품 ID
+                quantity: orderInfo.quantity,          // 수량
+                coupon_code: orderInfo.couponCode,     // 쿠폰 코드
+                mileage_amount: orderInfo.mileageDiscount, // 적립금 사용액
+                pg: paymentParams.pg,
+                method: paymentParams.method
+            })
         })
 
+        const orderData = await orderResponse.json()
+
+        if (!orderData.success) {
+            throw new Error(orderData.message || '주문 생성 실패')
+        }
+
         console.log('주문 생성 완료:', orderData)
+        // orderData.price는 서버에서 계산한 금액!
 
         // 3-2. 결제 요청
-        // 서버에서 생성한 주문 정보로 결제 진행
+        // ⭐ 서버에서 계산한 금액(orderData.price)으로 결제 진행
         const paymentResult = await BootpayWidget.requestPayment({
             application_id: document.getElementById('appId').value,
             pg: orderData.pg,
             method: orderData.method,
             order_id: orderData.order_id,
             order_name: orderData.order_name,
-            price: orderData.price,
+            price: orderData.price,  // 서버에서 계산한 금액 사용
             redirect_url: window.location.origin + '/src/widget/widget_result.html',
             user: {
                 id: 'demo_user_' + Date.now(),
@@ -317,10 +345,18 @@ async function requestPayment() {
         console.log('결제 완료:', paymentResult)
 
         // 3-3. 결제 완료 후 서버 검증 요청
-        const verifyResult = await mockVerifyPayment({
-            receipt_id: paymentResult.receipt_id,
-            order_id: orderData.order_id
+        // ⭐ 핵심: receipt_id로 Bootpay에서 실제 결제 금액을 조회하고
+        // 주문 생성 시 저장한 금액과 비교하여 위변조 검증
+        const verifyResponse = await fetch(`${API_BASE_URL}/api/orders/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                receipt_id: paymentResult.receipt_id,
+                order_id: orderData.order_id
+            })
         })
+
+        const verifyResult = await verifyResponse.json()
 
         if (verifyResult.success) {
             showToast('결제가 완료되었습니다!', 'success')
@@ -330,7 +366,9 @@ async function requestPayment() {
                 window.location.href = `/src/widget/widget_result.html?order_id=${orderData.order_id}&receipt_id=${paymentResult.receipt_id}`
             }, 1500)
         } else {
+            // 금액 불일치 등 검증 실패
             showToast('결제 검증 실패: ' + verifyResult.message, 'error')
+            console.error('검증 실패 상세:', verifyResult)
         }
 
     } catch (error) {
@@ -340,42 +378,6 @@ async function requestPayment() {
         checkoutBtn.classList.remove('loading')
         checkoutBtn.disabled = false
     }
-}
-
-// ========================================
-// 모의 서버 함수 (데모용)
-// ========================================
-
-async function mockCreateOrder(params) {
-    // 실제 환경에서는 fetch('/api/payment/prepare', {...})를 사용합니다.
-    await delay(500)
-
-    const paymentParams = params.payment_method || {}
-
-    return {
-        order_id: 'ORDER_' + Date.now(),
-        order_name: params.order_name,
-        price: calculateTotalPrice(),
-        pg: paymentParams.pg || 'nicepay',
-        method: paymentParams.method || 'card'
-    }
-}
-
-async function mockVerifyPayment(_params) {
-    // 실제 환경에서는 fetch('/api/payment/verify', {...})를 사용합니다.
-    // 서버에서 receipt_id로 부트페이 결제 조회 API를 호출하여
-    // 실제 결제 금액과 DB의 주문 금액을 대조합니다.
-    // _params: { receipt_id, order_id }
-    await delay(300)
-
-    return {
-        success: true,
-        message: '결제 검증 완료'
-    }
-}
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // ========================================
@@ -397,7 +399,7 @@ function showToast(message, type = '') {
 // ========================================
 
 window.changeQuantity = changeQuantity
-window.toggleMileage = toggleMileage
+window.applyMileage = applyMileage
 window.applyCoupon = applyCoupon
 window.removeCoupon = removeCoupon
 window.requestPayment = requestPayment

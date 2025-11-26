@@ -1,6 +1,9 @@
 // NPM 패키지에서 import
 import { BootpayCommerce } from '@bootpay/bp-commerce-sdk'
 
+// API 서버 주소
+const API_BASE_URL = 'http://localhost:3001'
+
 // 플랜 정보 정의
 const PLANS = {
     starter: {
@@ -159,7 +162,7 @@ function showLoading(show) {
 }
 
 // 플랜 선택 및 결제 요청
-function selectPlan(planKey) {
+async function selectPlan(planKey) {
     const plan = PLANS[planKey]
     if (!plan) {
         alert('알 수 없는 요금제입니다.')
@@ -172,77 +175,113 @@ function selectPlan(planKey) {
         return
     }
 
-    const price = isYearlyBilling ? plan.yearly_price : plan.monthly_price
-    const duration = isYearlyBilling ? 12 : 1
     const billingType = isYearlyBilling ? '연간' : '월간'
     const productId = isYearlyBilling ? plan.yearly_product_id : plan.monthly_product_id
 
-    // 결제 확인
-    // if (!confirm(`${plan.name} 플랜 (${billingType} 결제)\n\n가격: ₩${price.toLocaleString()}/월\n\n구독을 시작하시겠습니까?`)) {
-    //     return
-    // }
+    showLoading(true)
 
-    // showLoading(true)
-    BootpayCommerce.setLogLevel(1)
-    // Bootpay 청구서 요청
-    BootpayCommerce.requestInvoice({
-        client_key: document.getElementsByName('clientKey')[0].value,
-        name: `CloudSync Pro ${plan.name} 플랜`,
-        memo: `${billingType} 구독 결제`,
-        user: {
-            membership_type: 'guest',
-            user_id: 'demo_user_1234',
-            name: '데모 사용자',
-            phone: '01012345678',
-            email: 'demo@example.com'
-        },
-        price: price,
-        redirect_url: window.location.origin + '/src/plan/plan_result.html',
-        usage_api_url: 'https://dev-api.bootapi.com/v1/billing/usage',
-        // use_notification: true,
-        use_auto_login: true,
-        request_id: `plan_${planKey}_${Date.now()}`,
-        products: [
-            {
+    try {
+        // ========================================
+        // STEP 1: 서버에 주문 생성 (위변조 방지)
+        // ⭐ 클라이언트의 금액을 신뢰하지 않고, 서버에서 상품ID로 금액 조회
+        // ========================================
+        console.log('서버에 플랜 주문 생성 요청...')
+
+        const orderResponse = await fetch(`${API_BASE_URL}/api/orders/plan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                 product_id: productId,
-                duration: -1,
-                quantity: 1,
-                // price_adjustments: isYearlyBilling ? [
-                //     {
-                //         price_adjustment_id: 'yearly_discount',
-                //         start_at: new Date().toISOString().split('T')[0] + ' 00:00:00',
-                //         end_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + ' 23:59:59',
-                //         name: '연간 결제 20% 할인',
-                //         cycles: [
-                //             {
-                //                 duration: 12,
-                //                 adjustment_type: 'discount_percent',
-                //                 name: '연간 할인',
-                //                 value: 20
-                //             }
-                //         ]
-                //     }
-                // ] : []
-            }
-        ],
-        metadata: {
-            plan_key: planKey,
-            billing_type: billingType,
-            selected_at: new Date().toISOString()
-        },
-        extra: {
-            separately_confirmed: false,
-            create_order_immediately: true
+                plan_key: planKey,
+                billing_type: billingType
+            })
+        })
+
+        const orderData = await orderResponse.json()
+
+        if (!orderData.success) {
+            throw new Error(orderData.message || '주문 생성 실패')
         }
-    }).then(function (response) {
-        // showLoading(false)
+
+        console.log('플랜 주문 생성 완료:', orderData)
+        // orderData.price는 서버에서 조회한 금액!
+
+        // ========================================
+        // STEP 2: Bootpay Commerce 청구서 요청
+        // ⭐ 서버에서 받은 금액(orderData.price)으로 결제 요청
+        // ========================================
+        BootpayCommerce.setLogLevel(1)
+
+        const response = await BootpayCommerce.requestInvoice({
+            client_key: document.getElementsByName('clientKey')[0].value,
+            name: `CloudSync Pro ${plan.name} 플랜`,
+            memo: `${billingType} 구독 결제`,
+            user: {
+                membership_type: 'guest',
+                user_id: 'demo_user_1234',
+                name: '데모 사용자',
+                phone: '01012345678',
+                email: 'demo@example.com'
+            },
+            price: orderData.price,  // ⭐ 서버에서 계산한 금액 사용
+            redirect_url: window.location.origin + '/src/plan/plan_result.html',
+            usage_api_url: 'https://dev-api.bootapi.com/v1/billing/usage',
+            use_auto_login: true,
+            request_id: orderData.order_id,  // 서버에서 생성한 주문 ID
+            products: [
+                {
+                    product_id: productId,
+                    duration: -1,
+                    quantity: 1
+                }
+            ],
+            metadata: {
+                order_id: orderData.order_id,  // 검증용 주문 ID 저장
+                plan_key: planKey,
+                billing_type: billingType,
+                selected_at: new Date().toISOString()
+            },
+            extra: {
+                separately_confirmed: false,
+                create_order_immediately: true
+            }
+        })
+
         console.log('Invoice Response:', response)
+
+        // ========================================
+        // STEP 3: 결제 완료 후 서버 검증
+        // ⭐ Commerce SDK의 경우 결제 완료 webhook 또는
+        //    redirect_url에서 receipt_id를 받아 검증
+        // ========================================
+        if (response.receipt_id) {
+            console.log('결제 검증 요청...')
+            const verifyResponse = await fetch(`${API_BASE_URL}/api/orders/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receipt_id: response.receipt_id,
+                    order_id: orderData.order_id
+                })
+            })
+
+            const verifyResult = await verifyResponse.json()
+            console.log('검증 결과:', verifyResult)
+
+            if (!verifyResult.success) {
+                alert(`결제 검증 실패: ${verifyResult.message}`)
+                return
+            }
+        }
+
+        showLoading(false)
         alert(`${plan.name} 플랜 구독 요청이 완료되었습니다!\n\n콘솔에서 상세 응답을 확인하세요.`)
-    }).catch((error) => {
-        // showLoading(false)
+
+    } catch (error) {
+        showLoading(false)
         console.error('Invoice Error:', error)
         alert('구독 요청 중 오류가 발생했습니다:\n' + error.message)
-    })
+    }
 }
 
 // 전역 스코프에 함수 노출 (HTML에서 onclick으로 호출하기 위해)
