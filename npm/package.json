@@ -11,7 +11,7 @@
   "dependencies": {
     "@bootpay/bp-commerce-sdk": "^1.0.1-beta.4",
     "@bootpay/client-js": "^5.1.5",
-    "@bootpay/backend-js": "2.3.6"
+    "@bootpay/backend-js": "2.4.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"

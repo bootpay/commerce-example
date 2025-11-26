@@ -444,6 +444,19 @@
             return `${parseInt(quota)}개월`;
         }
 
+        // Commerce 응답에서 빌링/카드 데이터 추출
+        function extractBillingData(serverData) {
+            // Commerce API 응답 구조에서 billing_key_data 추출
+            if (serverData?.order_subscriptions?.[0]?.first_order_subscription_bill?.billing_key_data) {
+                return serverData.order_subscriptions[0].first_order_subscription_bill.billing_key_data;
+            }
+            // 일반 결제 API 응답 구조
+            if (serverData?.card_data) {
+                return serverData.card_data;
+            }
+            return null;
+        }
+
         // 결제 수단 상세 정보 표시
         function showPaymentMethodDetails(serverData) {
             const section = document.getElementById('paymentMethodSection');
@@ -456,29 +469,37 @@
 
             let html = '';
 
-            // 카드 결제
-            if (serverData.card_data && serverData.method_symbol === 'card') {
-                const card = serverData.card_data;
+            // Commerce API 또는 일반 결제 API에서 카드 데이터 추출
+            const billingData = extractBillingData(serverData);
+
+            // 카드 결제 (Commerce 또는 일반)
+            if (billingData && (billingData.type === 'card' || billingData.card_company)) {
                 html = `
                     <div class="card-info">
                         <div class="card-icon">CARD</div>
                         <div class="card-details">
-                            <div class="card-company">${card.card_company || '-'}</div>
-                            <div class="card-number">${maskCardNumber(card.card_no)}</div>
+                            <div class="card-company">${billingData.card_company || '-'}</div>
+                            <div class="card-number">${maskCardNumber(billingData.card_no)}</div>
                         </div>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">승인번호</span>
-                        <span class="detail-value mono">${card.card_approve_no || '-'}</span>
+                        <span class="detail-value mono">${billingData.card_approve_no || '-'}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">할부</span>
-                        <span class="detail-value">${getQuotaText(card.card_quota)}</span>
+                        <span class="detail-value">${getQuotaText(billingData.card_quota)}</span>
                     </div>
-                    ${card.receipt_url ? `
+                    ${billingData.card_type ? `
+                    <div class="detail-row">
+                        <span class="detail-label">카드 종류</span>
+                        <span class="detail-value">${billingData.card_type}</span>
+                    </div>
+                    ` : ''}
+                    ${billingData.receipt_url ? `
                     <div class="detail-row">
                         <span class="detail-label">매출전표</span>
-                        <span class="detail-value"><a href="${card.receipt_url}" target="_blank">확인하기</a></span>
+                        <span class="detail-value"><a href="${billingData.receipt_url}" target="_blank">확인하기</a></span>
                     </div>
                     ` : ''}
                 `;
@@ -569,10 +590,32 @@
             // 서버 검증 결과 반영
             const errorMessage = data.message || '';
 
-            // 서버 데이터의 status로 실제 결제 상태 확인
+            // Commerce API 또는 일반 결제 API 상태 확인
             const paymentStatus = serverData?.status;
-            const isPaymentSuccess = paymentStatus === 1 || status === 'success' || status === 'done';
-            const isPaymentCancelled = paymentStatus === 3 || paymentStatus === 5 || status === 'cancel';
+            const receiptStatus = serverData?.receipt_status;
+
+            // Commerce API 성공 상태들
+            const commerceSuccessStatuses = [
+                'subscription_request_completed',
+                'order_completed',
+                'payment_completed'
+            ];
+            const commerceReceiptSuccess = [
+                'receipt_billing_key_published',
+                'receipt_paid'
+            ];
+
+            // 일반 결제 API 성공 (status === 1)
+            const isRegularPaymentSuccess = paymentStatus === 1;
+            // Commerce API 성공
+            const isCommerceSuccess = commerceSuccessStatuses.includes(paymentStatus) ||
+                                      commerceReceiptSuccess.includes(receiptStatus);
+            // URL 파라미터 성공
+            const isUrlSuccess = status === 'success' || status === 'done';
+
+            const isPaymentSuccess = isRegularPaymentSuccess || isCommerceSuccess || isUrlSuccess;
+            const isPaymentCancelled = paymentStatus === 3 || paymentStatus === 5 ||
+                                       paymentStatus === 'cancelled' || status === 'cancel';
 
             if (isPaymentSuccess && !isPaymentCancelled) {
                 icon.className = 'result-icon success';
@@ -584,7 +627,7 @@
                 iconEmoji.textContent = '!';
                 title.textContent = '결제가 취소되었습니다';
                 message.textContent = '결제가 취소되었습니다. 언제든지 다시 시도하실 수 있습니다.';
-            } else if (paymentStatus === 20) {
+            } else if (paymentStatus === 20 || receiptStatus === 'receipt_vbank_ready') {
                 // 가상계좌 입금 대기
                 icon.className = 'result-icon pending';
                 iconEmoji.textContent = '!';
@@ -597,8 +640,8 @@
                 message.textContent = errorMessage || '결제 처리 중 문제가 발생했습니다. 다시 시도해 주세요.';
             }
 
-            // 샌드박스 뱃지 표시
-            if (serverData?.sandbox) {
+            // 샌드박스/개발 환경 뱃지 표시
+            if (serverData?.sandbox || serverData?.sdk) {
                 document.getElementById('sandboxBadge').style.display = 'inline';
             }
 
@@ -608,21 +651,40 @@
             // 주문 정보 표시
             const detailRows = document.getElementById('detailRows');
 
+            // Commerce API 응답에서 빌링 데이터 추출
+            const billingData = extractBillingData(serverData);
+            const firstBill = serverData?.order_subscriptions?.[0]?.first_order_subscription_bill;
+            const subscription = serverData?.order_subscriptions?.[0];
+
             // URL 파라미터에서도 값 추출 (Commerce SDK용)
-            const orderId = displayData.order_id || displayData.order_number || data.order_number || data.order_id || '-';
+            const orderId = displayData.order_number || displayData.order_id || data.order_number || data.order_id || '-';
             const receiptId = displayData.receipt_id || data.receipt_id || data.receiptId || '-';
             const orderName = displayData.order_name || displayData.name || data.order_name || data.name || data.item_name || '-';
             const price = displayData.price || data.price || data.amount;
-            const method = displayData.method || data.method || data.pay_method;
+
+            // 결제수단 추출 (Commerce API 또는 일반 API)
+            let method = displayData.method || data.method || data.pay_method;
+            if (billingData?.type) {
+                const methodMap = { 'card': '카드', 'bank': '계좌이체', 'vbank': '가상계좌', 'phone': '휴대폰' };
+                method = methodMap[billingData.type] || billingData.type;
+            }
+            if (billingData?.card_company) {
+                method = billingData.card_company;
+            }
             const pg = displayData.pg || data.pg;
 
             const details = [
                 { label: '주문번호', value: orderId, mono: true },
             ];
 
-            // 영수증 ID가 있을 때만 표시
+            // 영수증 ID가 있을 때만 표시 (일반 결제용)
             if (receiptId && receiptId !== '-') {
                 details.push({ label: '영수증 ID', value: receiptId, mono: true });
+            }
+
+            // 고객명 (Commerce API)
+            if (displayData.username || displayData.user?.name) {
+                details.push({ label: '고객명', value: displayData.username || displayData.user?.name });
             }
 
             details.push(
@@ -641,16 +703,27 @@
                 { label: '결제일시', value: purchasedAt ? formatDate(purchasedAt) : '-' }
             );
 
-            // 결제수단 (있을 때만 표시)
+            // 결제수단
             if (method || pg) {
                 const methodText = method || '-';
                 const pgText = pg ? ` (${pg})` : '';
                 details.push({ label: '결제수단', value: methodText + pgText });
             }
 
-            details.push(
-                { label: '결제상태', value: displayData.status_locale || getStatusText(status, displayData.status) }
-            );
+            // Commerce 구독 정보
+            if (subscription) {
+                details.push({ label: '구독 상태', value: getSubscriptionStatusText(subscription.status) });
+                if (subscription.payment_next_at) {
+                    details.push({ label: '다음 결제일', value: formatDate(subscription.payment_next_at) });
+                }
+            }
+
+            // 일반 결제 상태
+            if (!subscription) {
+                details.push(
+                    { label: '결제상태', value: displayData.status_locale || getStatusText(status, displayData.status) }
+                );
+            }
 
             // 영수증 URL이 있으면 추가
             if (displayData.receipt_url) {
@@ -689,8 +762,8 @@
         }
 
         function getStatusText(eventStatus, paymentStatus) {
-            // 서버에서 받은 결제 상태
-            if (paymentStatus !== undefined) {
+            // 서버에서 받은 결제 상태 (숫자)
+            if (typeof paymentStatus === 'number') {
                 const paymentStatusMap = {
                     0: '결제 대기',
                     1: '결제 완료',
@@ -703,6 +776,18 @@
                 return paymentStatusMap[paymentStatus] || `상태 ${paymentStatus}`;
             }
 
+            // Commerce API 상태 (문자열)
+            if (typeof paymentStatus === 'string') {
+                const commerceStatusMap = {
+                    'subscription_request_completed': '구독 요청 완료',
+                    'order_completed': '주문 완료',
+                    'payment_completed': '결제 완료',
+                    'cancelled': '취소됨',
+                    'refunded': '환불 완료'
+                };
+                return commerceStatusMap[paymentStatus] || paymentStatus;
+            }
+
             // URL 파라미터의 이벤트 상태
             const eventStatusMap = {
                 'success': '결제 완료',
@@ -712,6 +797,18 @@
                 'pending': '처리중'
             };
             return eventStatusMap[eventStatus] || eventStatus;
+        }
+
+        function getSubscriptionStatusText(status) {
+            const statusMap = {
+                'subscribing': '구독 중',
+                'paused': '일시정지',
+                'cancelled': '구독 취소',
+                'expired': '만료됨',
+                'pending': '대기 중',
+                'trial': '무료 체험 중'
+            };
+            return statusMap[status] || status;
         }
 
         function toggleRawData() {

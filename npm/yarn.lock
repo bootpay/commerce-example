@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@bootpay/backend-js@2.3.6":
-  version "2.3.6"
-  resolved "https://registry.yarnpkg.com/@bootpay/backend-js/-/backend-js-2.3.6.tgz#740ec3ebdfa557cff5828ae38aae0dcb55f0f214"
-  integrity sha512-nV2rGddnDBl6sBVbFLMU5aSES+YXYDyO4qOghpHrW4/IfVXEvZVPl9GvB4iCxB92yWBvjOifN+A8ZMNmuJFwuw==
+"@bootpay/backend-js@2.4.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@bootpay/backend-js/-/backend-js-2.4.0.tgz#9a9738571ee03fd3a5637fe765d6713ac9e68f0c"
+  integrity sha512-k2RamrxY0fjVdMRYzLpgrjCdfR85EBiqhvOijyc7yteYVCHQiGXI4Ke0sRyXUAnqAIwzebsEZoBv0oO+9i7ydQ==
   dependencies:
     axios "^1.7.2"
 
