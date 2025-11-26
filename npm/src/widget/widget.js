@@ -1,5 +1,5 @@
 // NPM 패키지에서 import
-import Bootpay, { BootpayWidget } from '@bootpay/client-js'
+import { BootpayWidget } from '@bootpay/client-js'
 
 // 주문 정보
 const orderInfo = {
@@ -9,9 +9,6 @@ const orderInfo = {
     couponDiscount: 0,
     couponCode: null
 }
-
-// 위젯 인스턴스
-let widget = null
 
 // DOM 로드 후 초기화
 document.addEventListener('DOMContentLoaded', function() {
@@ -37,11 +34,11 @@ function getCache() {
         const env = document.getElementById('env').value
         const data = JSON.parse(window.localStorage.getItem('__widget_cache_' + env))
         return data === undefined || data === null ? {
-            app_id: '5b8f6a4d396fa665fdc2b5e7'
+            app_id: '692682dfb2084136e29ac1d9'
         } : data
     } catch (e) {
         return {
-            app_id: '5b8f6a4d396fa665fdc2b5e7'
+            app_id: '692682dfb2084136e29ac1d9'
         }
     }
 }
@@ -66,9 +63,7 @@ function saveSettings() {
     showToast('설정이 저장되었습니다. 위젯을 재로드합니다.')
 
     // 위젯 재로드
-    if (widget) {
-        widget.destroy()
-    }
+    BootpayWidget.destroy()
     initWidget()
 }
 
@@ -97,17 +92,24 @@ function initWidget() {
     const isSandbox = env === 'development' || env === 'stage'
 
     try {
+        BootpayWidget.setEnvironmentMode("development")
         // ------ STEP 1. 위젯 렌더링 ------
-        widget = BootpayWidget.render('#payment-widget-area', {
+        BootpayWidget.render('#payment-widget-area', {
             application_id: appId,
             price: calculateTotalPrice(),
             sandbox: isSandbox,
             use_terms: true,
+            extra: {
+                hide_title: true,
+            },
+
             hooks: {
                 // 위젯 렌더링 완료
                 ready: function() {
                     console.log('결제 위젯 준비 완료')
-                    widgetArea.className = 'loaded'
+                    const area = document.getElementById('payment-widget-area')
+                    area.classList.remove('loading')
+                    area.classList.add('loaded')
                 },
                 // 모든 약관 동의 시
                 allTermsAccepted: function() {
@@ -115,8 +117,9 @@ function initWidget() {
                     document.getElementById('checkout-btn').disabled = false
                 },
                 // 결제수단 변경 시
-                paymentMethodUpdated: function(method) {
-                    console.log('결제수단 변경:', method)
+                paymentMethodUpdated: function(data) {
+                    console.log('결제수단 변경:', data)
+                    document.getElementById('checkout-btn').disabled = !data.completed
                 },
                 // 약관 동의 상태 변경 시
                 termsConsentUpdated: function() {
@@ -179,9 +182,7 @@ function updatePriceDisplay() {
 
     // ------ STEP 2. 금액 업데이트 ------
     // 위젯에 변경된 금액 반영
-    if (widget && widget.isRendered && widget.isRendered()) {
-        widget.update({ price: total })
-    }
+    BootpayWidget.update({ price: total })
 }
 
 // ========================================
@@ -290,20 +291,21 @@ async function requestPayment() {
             quantity: orderInfo.quantity,
             mileage_amount: orderInfo.mileageDiscount,
             coupon_code: orderInfo.couponCode,
-            payment_method: widget.currentPaymentParameters()
+            payment_method: BootpayWidget.currentPaymentParameters()
         })
 
         console.log('주문 생성 완료:', orderData)
 
         // 3-2. 결제 요청
         // 서버에서 생성한 주문 정보로 결제 진행
-        const paymentResult = await Bootpay.requestPayment({
+        const paymentResult = await BootpayWidget.requestPayment({
             application_id: document.getElementById('appId').value,
             pg: orderData.pg,
             method: orderData.method,
             order_id: orderData.order_id,
             order_name: orderData.order_name,
             price: orderData.price,
+            redirect_url: window.location.origin + '/src/widget/widget_result.html',
             user: {
                 id: 'demo_user_' + Date.now(),
                 username: '홍길동',
@@ -325,7 +327,7 @@ async function requestPayment() {
 
             // 결제 완료 페이지로 이동
             setTimeout(() => {
-                window.location.href = `/src/result.html?order_id=${orderData.order_id}&receipt_id=${paymentResult.receipt_id}`
+                window.location.href = `/src/widget/widget_result.html?order_id=${orderData.order_id}&receipt_id=${paymentResult.receipt_id}`
             }, 1500)
         } else {
             showToast('결제 검증 실패: ' + verifyResult.message, 'error')

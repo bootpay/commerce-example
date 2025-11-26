@@ -197,7 +197,7 @@ function selectPlan(planKey) {
             email: 'demo@example.com'
         },
         price: price,
-        redirect_url: window.location.origin + '/src/result.html',
+        redirect_url: window.location.origin + '/src/plan/plan_result.html',
         usage_api_url: 'https://dev-api.bootapi.com/v1/billing/usage',
         // use_notification: true,
         use_auto_login: true,

@@ -327,6 +327,9 @@
             background: transparent;
             min-height: auto;
         }
+        #payment-widget-area.loaded::after {
+            content: none;
+        }
 
         /* Checkout Button */
         .checkout-btn {
@@ -610,6 +613,6 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <script type="module" src="/src/widget.js"></script>
+    <script type="module" src="/src/widget/widget.js"></script>
 </body>
 </html>

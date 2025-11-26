@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@bootpay/backend-js@2.4.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@bootpay/backend-js/-/backend-js-2.4.0.tgz#9a9738571ee03fd3a5637fe765d6713ac9e68f0c"
-  integrity sha512-k2RamrxY0fjVdMRYzLpgrjCdfR85EBiqhvOijyc7yteYVCHQiGXI4Ke0sRyXUAnqAIwzebsEZoBv0oO+9i7ydQ==
+"@bootpay/backend-js@2.4.1":
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/@bootpay/backend-js/-/backend-js-2.4.1.tgz#e3d5419a5a35c20f652209551f497ea185f6c271"
+  integrity sha512-GhnmFDbOalczy14bz82quI4gph/0IHoUqJ1anL8WhJ/m9+vGQa1mkBdUWdkbgcI4+UVslttyaUsWEjUyx1CRWg==
   dependencies:
     axios "^1.7.2"
 
@@ -16,10 +16,10 @@
   dependencies:
     typescript "^5.9.3"
 
-"@bootpay/client-js@^5.1.5":
-  version "5.1.5"
-  resolved "https://registry.yarnpkg.com/@bootpay/client-js/-/client-js-5.1.5.tgz#1d3c33401871453eaa6339ac84cd9ade28204f60"
-  integrity sha512-hktzKV6pmkswkPybz1jsarGC0wyyytQz3X32VCKWaJlhSrElSe/o6yYOuTpllw+3/BHf9uo62n4pXag9R4bjgw==
+"@bootpay/client-js@^5.2.0":
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/@bootpay/client-js/-/client-js-5.2.0.tgz#f5f378691089be618777cba2b881d2b323fe476d"
+  integrity sha512-KzC6updLZNlOGVpEThcqz9+fD7uGTu4kpm/xVFFUDf3I4tQ4CAHw0x6lSQu4XRI1bYJacWPDkg7i0Za4Csp7cA==
   dependencies:
     typescript "^5.5.4"
 
