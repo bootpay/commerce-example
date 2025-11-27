@@ -1,8 +1,31 @@
 // NPM 패키지에서 import
 import { BootpayWidget } from '@bootpay/client-js'
 
-// API 서버 주소
-const API_BASE_URL = 'http://localhost:3001'
+// API 서버 주소 (환경변수 또는 상대경로)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+
+// ========================================
+// 환경별 설정 (development, stage, production)
+// ========================================
+const ENV_CONFIG = {
+    development: {
+        application_id: '692682dfb2084136e29ac1d9'
+    },
+    stage: {
+        application_id: '6927d523472c3a791b6250cd' // Stage 환경 키 (필요시 변경)
+    },
+    production: {
+        application_id: '6927d523472c3a791b6250cd' // Production 환경 키 (필요시 변경)
+    }
+}
+
+// 현재 환경
+let currentEnv = 'production'
+
+// 현재 환경의 설정 가져오기
+function getCurrentConfig() {
+    return ENV_CONFIG[currentEnv]
+}
 
 // 주문 정보
 const orderInfo = {
@@ -16,7 +39,21 @@ const orderInfo = {
 
 // DOM 로드 후 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    loadSettings()
+    // 저장된 환경 불러오기 (기본값: production)
+    const savedEnv = localStorage.getItem('bootpay_widget_env') || 'production'
+    currentEnv = savedEnv
+
+    // 환경 선택 UI 초기화
+    const envSelect = document.getElementById('env')
+    if (envSelect) {
+        envSelect.value = currentEnv
+    }
+
+    // Widget SDK 환경 설정
+    BootpayWidget.setEnvironmentMode(currentEnv)
+
+    console.log(`[Widget] 환경: ${currentEnv}, App ID: ${getCurrentConfig().application_id}`)
+
     initWidget()
     bindEventListeners()
 })
@@ -44,67 +81,35 @@ function bindEventListeners() {
 
     // 결제 버튼
     document.getElementById('checkout-btn')?.addEventListener('click', requestPayment)
-
-    // 설정 패널
-    document.getElementById('settings-toggle-btn')?.addEventListener('click', toggleSettings)
-    document.getElementById('settings-save-btn')?.addEventListener('click', saveSettings)
-    document.getElementById('env')?.addEventListener('change', changeMode)
 }
 
 // ========================================
-// 설정 관리
+// 환경 변경
 // ========================================
 
-function getCacheMode() {
-    try {
-        const mode = window.localStorage.getItem('__widget_mode')
-        return mode === undefined || mode === null ? 'development' : mode
-    } catch (e) {
-        return 'development'
+function changeEnv() {
+    const envSelect = document.getElementById('env')
+    currentEnv = envSelect.value
+
+    // 환경 저장
+    localStorage.setItem('bootpay_widget_env', currentEnv)
+
+    // Widget SDK 환경 변경
+    BootpayWidget.setEnvironmentMode(currentEnv)
+
+    console.log(`[Widget] 환경 변경: ${currentEnv}, App ID: ${getCurrentConfig().application_id}`)
+
+    // 알림
+    const envNames = {
+        development: 'Development (테스트)',
+        stage: 'Stage',
+        production: 'Production (실서비스)'
     }
-}
-
-function getCache() {
-    try {
-        const env = document.getElementById('env').value
-        const data = JSON.parse(window.localStorage.getItem('__widget_cache_' + env))
-        return data === undefined || data === null ? {
-            app_id: '692682dfb2084136e29ac1d9'
-        } : data
-    } catch (e) {
-        return {
-            app_id: '692682dfb2084136e29ac1d9'
-        }
-    }
-}
-
-function loadSettings() {
-    document.getElementById('env').value = getCacheMode()
-    const cache = getCache()
-    document.getElementById('appId').value = cache.app_id
-}
-
-function saveSettings() {
-    const env = document.getElementById('env').value
-    const appId = document.getElementById('appId').value
-
-    const data = {
-        app_id: appId
-    }
-
-    window.localStorage.setItem('__widget_mode', env)
-    window.localStorage.setItem('__widget_cache_' + env, JSON.stringify(data))
-
-    showToast('설정이 저장되었습니다. 위젯을 재로드합니다.')
+    showToast(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다. 위젯을 재로드합니다.`)
 
     // 위젯 재로드
     BootpayWidget.destroy()
     initWidget()
-}
-
-function changeMode() {
-    window.localStorage.setItem('__widget_mode', document.getElementById('env').value)
-    loadSettings()
 }
 
 function toggleSettings() {
@@ -122,17 +127,16 @@ function initWidget() {
     const widgetArea = document.getElementById('payment-widget-area')
     widgetArea.className = 'loading'
 
-    const env = document.getElementById('env').value
-    const appId = document.getElementById('appId').value
-    const isSandbox = env === 'development' || env === 'stage'
+    const config = getCurrentConfig()
+    const isSandbox = currentEnv === 'development' || currentEnv === 'stage'
 
     try {
-        BootpayWidget.setEnvironmentMode("development")
         // ------ STEP 1. 위젯 렌더링 ------
         BootpayWidget.render('#payment-widget-area', {
-            application_id: appId,
+            application_id: config.application_id,
             price: calculateTotalPrice(),
             sandbox: isSandbox,
+            widget_key: 'default-widget',
             use_terms: true,
             extra: {
                 hide_title: true,
@@ -358,7 +362,7 @@ async function requestPayment() {
         // 3-2. 결제 요청
         // ⭐ 서버에서 계산한 금액(orderData.price)으로 결제 진행
         await BootpayWidget.requestPayment({
-            application_id: document.getElementById('appId').value,
+            application_id: getCurrentConfig().application_id,
             pg: orderData.pg,
             method: orderData.method,
             order_id: orderData.order_id,
@@ -395,3 +399,6 @@ function showToast(message, type = '') {
     }, 3000)
 }
 
+// 전역 스코프에 함수 노출 (HTML에서 onclick으로 호출하기 위해)
+window.toggleSettings = toggleSettings
+window.changeEnv = changeEnv

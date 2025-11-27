@@ -8,3 +8,4 @@ wrangler.toml
 
 # Build output
 dist/
+CLAUDE.md

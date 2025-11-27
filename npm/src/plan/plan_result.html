@@ -390,10 +390,17 @@
             return result;
         }
 
+        // 현재 환경 가져오기 (localStorage 또는 URL 파라미터)
+        function getCurrentEnv() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('env') || localStorage.getItem('bootpay_env') || 'production';
+        }
+
         // 서버에서 주문 정보 조회
         async function getOrderInfo(orderNumber) {
             try {
-                const response = await fetch('/api/order/' + orderNumber);
+                const env = getCurrentEnv();
+                const response = await fetch('/api/order/' + orderNumber + '?env=' + env);
                 const result = await response.json();
                 return result;
             } catch (error) {

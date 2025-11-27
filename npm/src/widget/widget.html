@@ -400,72 +400,6 @@
             text-decoration: underline;
         }
 
-        /* Settings Panel */
-        .settings-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 16px;
-            width: 280px;
-            z-index: 100;
-        }
-        .settings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .settings-header h3 {
-            font-size: 0.9rem;
-            color: #1e293b;
-        }
-        .settings-toggle {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-        .settings-content {
-            display: none;
-        }
-        .settings-content.show {
-            display: block;
-        }
-        .settings-group {
-            margin-bottom: 12px;
-        }
-        .settings-group label {
-            display: block;
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-        .settings-group select,
-        .settings-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.85rem;
-        }
-        .settings-save {
-            width: 100%;
-            padding: 8px;
-            background: #11998e;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .settings-save:hover {
-            background: #0e8377;
-        }
-
         /* Toast Message */
         .toast {
             position: fixed;
@@ -490,6 +424,66 @@
         }
         .toast.success {
             background: #16a34a;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .settings-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .settings-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .settings-content {
+            display: none;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        .settings-row {
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .settings-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        .settings-select:focus {
+            outline: none;
+            border-color: #11998e;
         }
     </style>
 </head>
@@ -519,7 +513,7 @@
                 <div class="product-info">
                     <div class="product-name">프리미엄 무선 이어폰 Pro Max</div>
                     <div class="product-desc">노이즈 캔슬링 / 30시간 재생 / IPX5 방수</div>
-                    <div class="product-price">₩<span id="unit-price">39,000</span></div>
+                    <div class="product-price">₩<span id="unit-price">4,000</span></div>
                     <div class="product-quantity">
                         <button class="qty-btn" id="qty-decrease">−</button>
                         <span class="qty-value" id="quantity">1</span>
@@ -570,7 +564,7 @@
                 </div>
                 <div class="price-row total">
                     <span>총 결제 금액</span>
-                    <span>₩<span id="total-price">39,000</span></span>
+                    <span>₩<span id="total-price">4,000</span></span>
                 </div>
             </div>
         </div>
@@ -596,24 +590,19 @@
 
     <!-- Settings Panel -->
     <div class="settings-panel">
-        <div class="settings-header">
-            <h3>⚙️ 개발자 설정</h3>
-            <button class="settings-toggle" id="settings-toggle-btn">▼</button>
+        <div class="settings-header" onclick="toggleSettings()">
+            <span class="settings-title">환경 설정</span>
+            <span class="settings-toggle">▲</span>
         </div>
-        <div class="settings-content show">
-            <div class="settings-group">
-                <label for="env">Environment</label>
-                <select name="env" id="env">
-                    <option value="development">Development (Sandbox)</option>
+        <div class="settings-content">
+            <div class="settings-row">
+                <label class="settings-label">실행 환경</label>
+                <select class="settings-select" id="env" onchange="changeEnv()">
+                    <option value="development">Development (테스트)</option>
                     <option value="stage">Stage</option>
-                    <option value="production">Production</option>
+                    <option value="production" selected>Production (실서비스)</option>
                 </select>
             </div>
-            <div class="settings-group">
-                <label for="appId">Application ID</label>
-                <input type="text" name="appId" id="appId" value="5b8f6a4d396fa665fdc2b5e7">
-            </div>
-            <button class="settings-save" id="settings-save-btn">설정 저장 및 위젯 재로드</button>
         </div>
     </div>
 

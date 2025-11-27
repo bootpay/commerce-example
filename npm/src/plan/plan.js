@@ -1,31 +1,88 @@
 // NPM 패키지에서 import
 import { BootpayCommerce } from '@bootpay/bp-commerce-sdk'
 
-// API 서버 주소
-const API_BASE_URL = 'http://localhost:3001'
+// API 서버 주소 (환경변수 또는 상대경로)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
-// 플랜 정보 정의
-const PLANS = {
+// ========================================
+// 환경별 설정 (development, stage, production)
+// ========================================
+const ENV_CONFIG = {
+    development: {
+        client_key: 'hxS-Up--5RvT6oU6QJE0JA',
+        plans: {
+            starter: {
+                monthly_product_id: '69268625d8df8fa1837cf661',
+                yearly_product_id: '692686c4d8df8fa1837cf666'
+            },
+            pro: {
+                monthly_product_id: '692686e5d8df8fa1837cf66b',
+                yearly_product_id: '69268721d8df8fa1837cf670'
+            },
+            enterprise: {
+                monthly_product_id: '69268783d8df8fa1837cf675',
+                yearly_product_id: '692687a2d8df8fa1837cf67a'
+            }
+        }
+    },
+    stage: {
+        client_key: 'hxS-Up--5RvT6oU6QJE0JA', // Stage 환경 키 (필요시 변경)
+        plans: {
+            starter: {
+                monthly_product_id: '6927d893ff30795ff003d374',
+                yearly_product_id: '6927d8c310561eabadddcfae'
+            },
+            pro: {
+                monthly_product_id: '6927d8f9ff30795ff003d379',
+                yearly_product_id: '6927d9167f65277ba9ddcf71'
+            },
+            enterprise: {
+                monthly_product_id: '6927d8f9ff30795ff003d379',
+                yearly_product_id: '6927d9167f65277ba9ddcf71'
+            }
+        }
+    },
+    production: {
+        client_key: 'sEN72kYZBiyMNytA8nUGxQ', // Production 환경 키 (필요시 변경)
+        plans: {
+            starter: {
+                monthly_product_id: '6927d893ff30795ff003d374',
+                yearly_product_id: '6927d8c310561eabadddcfae'
+            },
+            pro: {
+                monthly_product_id: '6927d8f9ff30795ff003d379',
+                yearly_product_id: '6927d9167f65277ba9ddcf71'
+            },
+            enterprise: {
+                monthly_product_id: '6927d8f9ff30795ff003d379',
+                yearly_product_id: '6927d9167f65277ba9ddcf71'
+            }
+        }
+    }
+    // sEN72kYZBiyMNytA8nUGxQ
+    // rnZLJamENRgfwTccwmI_Uu9cxsPpAV9X2W-Htg73yfU=
+
+
+    // 6927d523472c3a791b6250d0
+    // FUstljVVgv2P5733quhf+ZaZZbU8tKGMptfGrcPb1jI=
+}
+
+// 플랜 기본 정보 (환경과 무관)
+const PLAN_INFO = {
     starter: {
         name: 'Starter',
-        monthly_product_id: '69268625d8df8fa1837cf661',
-        yearly_product_id: '692686c4d8df8fa1837cf666',
         monthly_price: 9900,
         yearly_price: 7900,
         features: ['5GB 클라우드 스토리지', '최대 3개 프로젝트', '기본 분석 대시보드']
     },
     pro: {
         name: 'Professional',
-        monthly_product_id: '692686e5d8df8fa1837cf66b',
-        yearly_product_id: '69268721d8df8fa1837cf670',
         monthly_price: 29900,
         yearly_price: 23900,
         features: ['100GB 클라우드 스토리지', '무제한 프로젝트', '고급 분석 및 리포트']
     },
     enterprise: {
         name: 'Enterprise',
-        monthly_product_id: '69268783d8df8fa1837cf675',
-        yearly_product_id: '692687a2d8df8fa1837cf67a',
         monthly_price: 99000,
         yearly_price: 79000,
         features: ['무제한 클라우드 스토리지', '무제한 프로젝트', '전용 계정 매니저']
@@ -35,55 +92,59 @@ const PLANS = {
 // 현재 결제 주기 상태 (월간/연간)
 let isYearlyBilling = false
 
+// 현재 환경
+let currentEnv = 'production'
+
+// 현재 환경의 설정 가져오기
+function getCurrentConfig() {
+    return ENV_CONFIG[currentEnv]
+}
+
+// 플랜의 product_id 가져오기
+function getProductId(planKey, isYearly) {
+    const config = getCurrentConfig()
+    const planConfig = config.plans[planKey]
+    return isYearly ? planConfig.yearly_product_id : planConfig.monthly_product_id
+}
+
 // DOM이 로드된 후 초기화
 document.addEventListener('DOMContentLoaded', function () {
-    setSaveData()  // 내부에서 setEnvironmentMode() 호출됨
+    // 저장된 환경 불러오기 (기본값: production)
+    const savedEnv = localStorage.getItem('bootpay_env') || 'production'
+    currentEnv = savedEnv
+
+    // 환경 선택 UI 초기화
+    const envSelect = document.getElementById('env')
+    if (envSelect) {
+        envSelect.value = currentEnv
+    }
+
+    // Commerce SDK 환경 설정
+    BootpayCommerce.setEnvironmentMode(currentEnv)
+
+    console.log(`[Commerce] 환경: ${currentEnv}, Client Key: ${getCurrentConfig().client_key}`)
 })
 
-function getCacheMode() {
-    try {
-        const mode = window.localStorage.getItem('__mode_ex')
-        return mode === undefined || mode === null ? 'development' : mode
-    } catch (e) {
-        return 'development'
+// 환경 변경
+function changeEnv() {
+    const envSelect = document.getElementById('env')
+    currentEnv = envSelect.value
+
+    // 환경 저장
+    localStorage.setItem('bootpay_env', currentEnv)
+
+    // Commerce SDK 환경 변경
+    BootpayCommerce.setEnvironmentMode(currentEnv)
+
+    console.log(`[Commerce] 환경 변경: ${currentEnv}, Client Key: ${getCurrentConfig().client_key}`)
+
+    // 알림
+    const envNames = {
+        development: 'Development (테스트)',
+        stage: 'Stage',
+        production: 'Production (실서비스)'
     }
-}
-
-function getCache() {
-    try {
-        const data = JSON.parse(window.localStorage.getItem('__cache_ex' + document.getElementsByName('env')[0].value))
-        return data === undefined || data === null ? {
-            client_key: 'Dk9vJPvUr0j_lsEwwFoG7Q'
-        } : data
-    } catch (e) {
-        return {
-            client_key: 'Dk9vJPvUr0j_lsEwwFoG7Q'
-        }
-    }
-}
-
-function saveData() {
-    let data = getCache()
-
-    data.env = document.getElementsByName('env')[0].value
-    data.client_key = document.getElementsByName('clientKey')[0].value
-
-    window.localStorage.setItem('__mode_ex', document.getElementsByName('env')[0].value)
-    window.localStorage.setItem('__cache_ex' + document.getElementsByName('env')[0].value, JSON.stringify(data))
-    setSaveData()
-    alert('설정이 저장되었습니다.')
-}
-
-function setSaveData() {
-    document.getElementsByName('env')[0].value = getCacheMode()
-    const cache = getCache()
-    document.getElementsByName('clientKey')[0].value = cache.client_key
-    BootpayCommerce.setEnvironmentMode(document.getElementsByName('env')[0].value)
-}
-
-function changeMode() {
-    window.localStorage.setItem('__mode', document.getElementsByName('env')[0].value)
-    setSaveData()
+    alert(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다.`)
 }
 
 // 결제 주기 토글 (월간/연간)
@@ -151,19 +212,9 @@ function toggleSettings() {
     toggle.textContent = content.classList.contains('show') ? '▼' : '▲'
 }
 
-// 로딩 오버레이 표시/숨김
-function showLoading(show) {
-    const overlay = document.getElementById('loadingOverlay')
-    if (show) {
-        overlay.classList.add('show')
-    } else {
-        overlay.classList.remove('show')
-    }
-}
-
 // 플랜 선택 및 결제 요청
 async function selectPlan(planKey) {
-    const plan = PLANS[planKey]
+    const plan = PLAN_INFO[planKey]
     if (!plan) {
         alert('알 수 없는 요금제입니다.')
         return
@@ -175,15 +226,15 @@ async function selectPlan(planKey) {
         return
     }
 
+    const config = getCurrentConfig()
     const billingType = isYearlyBilling ? '연간' : '월간'
-    const productId = isYearlyBilling ? plan.yearly_product_id : plan.monthly_product_id
+    const productId = getProductId(planKey, isYearlyBilling)
 
-    showLoading(true)
+    console.log(`[결제 요청] 환경: ${currentEnv}, 플랜: ${planKey}, 상품ID: ${productId}`)
 
     try {
         // ========================================
         // STEP 1: 서버에 주문 생성 (위변조 방지)
-        // ⭐ 클라이언트의 금액을 신뢰하지 않고, 서버에서 상품ID로 금액 조회
         // ========================================
         console.log('서버에 플랜 주문 생성 요청...')
 
@@ -193,7 +244,8 @@ async function selectPlan(planKey) {
             body: JSON.stringify({
                 product_id: productId,
                 plan_key: planKey,
-                billing_type: billingType
+                billing_type: billingType,
+                env: currentEnv
             })
         })
 
@@ -204,16 +256,14 @@ async function selectPlan(planKey) {
         }
 
         console.log('플랜 주문 생성 완료:', orderData)
-        // orderData.price는 서버에서 조회한 금액!
 
         // ========================================
         // STEP 2: Bootpay Commerce 청구서 요청
-        // ⭐ 서버에서 받은 금액(orderData.price)으로 결제 요청
         // ========================================
         BootpayCommerce.setLogLevel(1)
 
         const response = await BootpayCommerce.requestInvoice({
-            client_key: document.getElementsByName('clientKey')[0].value,
+            client_key: config.client_key,
             name: `CloudSync Pro ${plan.name} 플랜`,
             memo: `${billingType} 구독 결제`,
             user: {
@@ -223,11 +273,13 @@ async function selectPlan(planKey) {
                 phone: '01012345678',
                 email: 'demo@example.com'
             },
-            price: orderData.price,  // ⭐ 서버에서 계산한 금액 사용
+            price: orderData.price,
             redirect_url: window.location.origin + '/src/plan/plan_result.html',
-            usage_api_url: 'https://dev-api.bootapi.com/v1/billing/usage',
+            usage_api_url: currentEnv === 'production'
+                ? 'https://api.bootapi.com/v1/billing/usage'
+                : 'https://dev-api.bootapi.com/v1/billing/usage',
             use_auto_login: true,
-            request_id: orderData.order_id,  // 서버에서 생성한 주문 ID
+            request_id: orderData.order_id,
             products: [
                 {
                     product_id: productId,
@@ -236,9 +288,10 @@ async function selectPlan(planKey) {
                 }
             ],
             metadata: {
-                order_id: orderData.order_id,  // 검증용 주문 ID 저장
+                order_id: orderData.order_id,
                 plan_key: planKey,
                 billing_type: billingType,
+                env: currentEnv,
                 selected_at: new Date().toISOString()
             },
             extra: {
@@ -251,8 +304,6 @@ async function selectPlan(planKey) {
 
         // ========================================
         // STEP 3: 결제 완료 후 서버 검증
-        // ⭐ Commerce SDK의 경우 결제 완료 webhook 또는
-        //    redirect_url에서 receipt_id를 받아 검증
         // ========================================
         if (response.receipt_id) {
             console.log('결제 검증 요청...')
@@ -274,20 +325,17 @@ async function selectPlan(planKey) {
             }
         }
 
-        showLoading(false)
         alert(`${plan.name} 플랜 구독 요청이 완료되었습니다!\n\n콘솔에서 상세 응답을 확인하세요.`)
 
     } catch (error) {
-        showLoading(false)
         console.error('Invoice Error:', error)
         alert('구독 요청 중 오류가 발생했습니다:\n' + error.message)
     }
 }
 
 // 전역 스코프에 함수 노출 (HTML에서 onclick으로 호출하기 위해)
-window.saveData = saveData
-window.changeMode = changeMode
 window.toggleBilling = toggleBilling
-window.toggleSettings = toggleSettings
 window.selectPlan = selectPlan
 window.focusPlan = focusPlan
+window.toggleSettings = toggleSettings
+window.changeEnv = changeEnv

@@ -385,10 +385,17 @@
             return result;
         }
 
+        // 현재 환경 가져오기 (localStorage 또는 URL 파라미터)
+        function getCurrentEnv() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('env') || localStorage.getItem('bootpay_widget_env') || 'production';
+        }
+
         // 결제 조회 API 호출
         async function getPaymentInfo(receiptId) {
             try {
-                const response = await fetch('/api/payment/receipt/' + receiptId, {
+                const env = getCurrentEnv();
+                const response = await fetch('/api/payment/receipt/' + receiptId + '?env=' + env, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'

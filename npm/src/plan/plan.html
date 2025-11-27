@@ -311,72 +311,6 @@
             transform: scale(1.02);
         }
 
-        /* Settings Panel */
-        .settings-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 16px;
-            width: 280px;
-            z-index: 100;
-        }
-        .settings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .settings-header h3 {
-            font-size: 0.9rem;
-            color: #1e293b;
-        }
-        .settings-toggle {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-        .settings-content {
-            display: none;
-        }
-        .settings-content.show {
-            display: block;
-        }
-        .settings-group {
-            margin-bottom: 12px;
-        }
-        .settings-group label {
-            display: block;
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-        .settings-group select,
-        .settings-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.85rem;
-        }
-        .settings-save {
-            width: 100%;
-            padding: 8px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .settings-save:hover {
-            background: #5a67d8;
-        }
-
         /* Loading overlay */
         .loading-overlay {
             display: none;
@@ -403,6 +337,85 @@
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .settings-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .settings-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .settings-content {
+            display: none;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        .settings-row {
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .settings-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        .settings-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .env-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .env-badge.development {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .env-badge.stage {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .env-badge.production {
+            background: #dcfce7;
+            color: #16a34a;
         }
     </style>
 </head>
@@ -511,24 +524,19 @@
 
     <!-- Settings Panel -->
     <div class="settings-panel">
-        <div class="settings-header">
-            <h3>⚙️ 개발자 설정</h3>
-            <button class="settings-toggle" onclick="toggleSettings()">▼</button>
+        <div class="settings-header" onclick="toggleSettings()">
+            <span class="settings-title">환경 설정</span>
+            <span class="settings-toggle">▲</span>
         </div>
-        <div class="settings-content show">
-            <div class="settings-group">
-                <label for="env">Environment</label>
-                <select name="env" id="env" onchange="changeMode()">
-                    <option value="development">Development</option>
+        <div class="settings-content">
+            <div class="settings-row">
+                <label class="settings-label">실행 환경</label>
+                <select class="settings-select" id="env" onchange="changeEnv()">
+                    <option value="development">Development (테스트)</option>
                     <option value="stage">Stage</option>
-                    <option value="production">Production</option>
+                    <option value="production" selected>Production (실서비스)</option>
                 </select>
             </div>
-            <div class="settings-group">
-                <label for="clientKey">Client Key</label>
-                <input type="text" name="clientKey" id="clientKey" value="QIzXk4M3EeD-6B1GTfmGHA">
-            </div>
-            <button class="settings-save" onclick="saveData()">설정 저장</button>
         </div>
     </div>
 
