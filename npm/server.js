@@ -19,7 +19,7 @@ const PRODUCTS = {
     // Widget 상품
     'premium_earphone': {
         name: '프리미엄 무선 이어폰 Pro Max',
-        price: 39000
+        price: 4000
     },
     // Plan 상품들 (월간)
     '69268625d8df8fa1837cf661': { name: 'CloudSync Pro Starter 플랜 (월간)', price: 9900 },

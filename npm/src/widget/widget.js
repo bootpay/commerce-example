@@ -7,7 +7,7 @@ const API_BASE_URL = 'http://localhost:3001'
 // 주문 정보
 const orderInfo = {
     productId: 'premium_earphone',  // 상품 ID (서버에서 가격 조회용)
-    unitPrice: 39000,
+    unitPrice: 4000,
     quantity: 1,
     mileageDiscount: 0,
     couponDiscount: 0,
@@ -18,7 +18,38 @@ const orderInfo = {
 document.addEventListener('DOMContentLoaded', function() {
     loadSettings()
     initWidget()
+    bindEventListeners()
 })
+
+// ========================================
+// 이벤트 리스너 바인딩
+// ========================================
+
+function bindEventListeners() {
+    // 적립금 입력
+    const mileageInput = document.getElementById('use-mileage')
+    if (mileageInput) {
+        mileageInput.addEventListener('input', function() {
+            applyMileage(this.value)
+        })
+    }
+
+    // 수량 변경 버튼
+    document.getElementById('qty-decrease')?.addEventListener('click', () => changeQuantity(-1))
+    document.getElementById('qty-increase')?.addEventListener('click', () => changeQuantity(1))
+
+    // 쿠폰 적용/제거 버튼
+    document.getElementById('coupon-apply-btn')?.addEventListener('click', applyCoupon)
+    document.getElementById('coupon-remove-btn')?.addEventListener('click', removeCoupon)
+
+    // 결제 버튼
+    document.getElementById('checkout-btn')?.addEventListener('click', requestPayment)
+
+    // 설정 패널
+    document.getElementById('settings-toggle-btn')?.addEventListener('click', toggleSettings)
+    document.getElementById('settings-save-btn')?.addEventListener('click', saveSettings)
+    document.getElementById('env')?.addEventListener('change', changeMode)
+}
 
 // ========================================
 // 설정 관리
@@ -364,15 +395,3 @@ function showToast(message, type = '') {
     }, 3000)
 }
 
-// ========================================
-// 전역 함수 노출
-// ========================================
-
-window.changeQuantity = changeQuantity
-window.applyMileage = applyMileage
-window.applyCoupon = applyCoupon
-window.removeCoupon = removeCoupon
-window.requestPayment = requestPayment
-window.saveSettings = saveSettings
-window.changeMode = changeMode
-window.toggleSettings = toggleSettings

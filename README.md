@@ -75,7 +75,7 @@ import Bootpay, { BootpayWidget } from '@bootpay/client-js'
 // 위젯 렌더링
 const widget = BootpayWidget.render('#payment-widget-area', {
   application_id: 'YOUR_APP_ID',
-  price: 39000,
+  price: 4000,
   sandbox: true,  // 테스트 모드
   hooks: {
     ready: () => console.log('위젯 준비 완료'),
@@ -88,7 +88,7 @@ const result = await Bootpay.requestPayment({
   application_id: 'YOUR_APP_ID',
   order_id: 'ORDER_123',
   order_name: '프리미엄 무선 이어폰',
-  price: 39000,
+  price: 4000,
   user: {
     username: '홍길동',
     phone: '01012345678'

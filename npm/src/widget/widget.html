@@ -521,9 +521,9 @@
                     <div class="product-desc">노이즈 캔슬링 / 30시간 재생 / IPX5 방수</div>
                     <div class="product-price">₩<span id="unit-price">39,000</span></div>
                     <div class="product-quantity">
-                        <button class="qty-btn" onclick="changeQuantity(-1)">−</button>
+                        <button class="qty-btn" id="qty-decrease">−</button>
                         <span class="qty-value" id="quantity">1</span>
-                        <button class="qty-btn" onclick="changeQuantity(1)">+</button>
+                        <button class="qty-btn" id="qty-increase">+</button>
                     </div>
                 </div>
             </div>
@@ -535,19 +535,18 @@
                 <div class="mileage-row">
                     <label for="use-mileage" class="mileage-label">적립금 사용</label>
                     <input type="number" id="use-mileage" class="mileage-input"
-                           min="0" max="3000" step="100" value="0"
-                           oninput="applyMileage(this.value)">
+                           min="0" max="3000" step="100" value="0">
                     <span class="mileage-amount">/ 3,000원 보유</span>
                 </div>
 
                 <div class="coupon-row">
                     <input type="text" class="coupon-input" id="coupon-code" placeholder="쿠폰 코드 입력">
-                    <button class="coupon-btn" onclick="applyCoupon()">적용</button>
+                    <button class="coupon-btn" id="coupon-apply-btn">적용</button>
                 </div>
                 <div class="coupon-applied" id="coupon-applied">
                     <span>🎉</span>
                     <span id="coupon-name">첫 구매 10% 할인</span>
-                    <button class="coupon-remove" onclick="removeCoupon()">제거</button>
+                    <button class="coupon-remove" id="coupon-remove-btn">제거</button>
                 </div>
             </div>
 
@@ -583,7 +582,7 @@
                 <div id="payment-widget-area" class="loading"></div>
             </div>
 
-            <button class="checkout-btn" id="checkout-btn" disabled onclick="requestPayment()">
+            <button class="checkout-btn" id="checkout-btn" disabled>
                 <span class="spinner"></span>
                 <span class="btn-text">₩<span id="btn-price">39,000</span> 결제하기</span>
             </button>
@@ -599,12 +598,12 @@
     <div class="settings-panel">
         <div class="settings-header">
             <h3>⚙️ 개발자 설정</h3>
-            <button class="settings-toggle" onclick="toggleSettings()">▼</button>
+            <button class="settings-toggle" id="settings-toggle-btn">▼</button>
         </div>
         <div class="settings-content show">
             <div class="settings-group">
                 <label for="env">Environment</label>
-                <select name="env" id="env" onchange="changeMode()">
+                <select name="env" id="env">
                     <option value="development">Development (Sandbox)</option>
                     <option value="stage">Stage</option>
                     <option value="production">Production</option>
@@ -614,7 +613,7 @@
                 <label for="appId">Application ID</label>
                 <input type="text" name="appId" id="appId" value="5b8f6a4d396fa665fdc2b5e7">
             </div>
-            <button class="settings-save" onclick="saveSettings()">설정 저장 및 위젯 재로드</button>
+            <button class="settings-save" id="settings-save-btn">설정 저장 및 위젯 재로드</button>
         </div>
     </div>
 
