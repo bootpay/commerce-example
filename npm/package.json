@@ -4,9 +4,8 @@
   "description": "Bootpay Commerce SDK Example with npm",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run server\" \"vite\"",
     "server": "node server.js",
-    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "vite build",
     "preview": "vite preview"
   },

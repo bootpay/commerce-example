@@ -326,7 +326,7 @@ async function requestPayment() {
 
         // 3-2. 결제 요청
         // ⭐ 서버에서 계산한 금액(orderData.price)으로 결제 진행
-        const paymentResult = await BootpayWidget.requestPayment({
+        await BootpayWidget.requestPayment({
             application_id: document.getElementById('appId').value,
             pg: orderData.pg,
             method: orderData.method,
@@ -340,37 +340,7 @@ async function requestPayment() {
                 phone: '01012345678',
                 email: 'demo@example.com'
             }
-        })
-
-        console.log('결제 완료:', paymentResult)
-
-        // 3-3. 결제 완료 후 서버 검증 요청
-        // ⭐ 핵심: receipt_id로 Bootpay에서 실제 결제 금액을 조회하고
-        // 주문 생성 시 저장한 금액과 비교하여 위변조 검증
-        const verifyResponse = await fetch(`${API_BASE_URL}/api/orders/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                receipt_id: paymentResult.receipt_id,
-                order_id: orderData.order_id
-            })
-        })
-
-        const verifyResult = await verifyResponse.json()
-
-        if (verifyResult.success) {
-            showToast('결제가 완료되었습니다!', 'success')
-
-            // 결제 완료 페이지로 이동
-            setTimeout(() => {
-                window.location.href = `/src/widget/widget_result.html?order_id=${orderData.order_id}&receipt_id=${paymentResult.receipt_id}`
-            }, 1500)
-        } else {
-            // 금액 불일치 등 검증 실패
-            showToast('결제 검증 실패: ' + verifyResult.message, 'error')
-            console.error('검증 실패 상세:', verifyResult)
-        }
-
+        }) 
     } catch (error) {
         console.error('결제 실패:', error)
         showToast('결제 실패: ' + (error.message || '알 수 없는 오류'), 'error')
