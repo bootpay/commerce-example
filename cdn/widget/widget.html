@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문서 - TechMall (CDN)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: #1e293b;
+        }
+        .back-link {
+            color: #11998e;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 32px;
+        }
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Panel - Order Summary */
+        .order-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .panel-title::before {
+            content: '🛒';
+            font-size: 1.25rem;
+        }
+
+        /* Product Item */
+        .product-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .product-image {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+        .product-info {
+            flex: 1;
+        }
+        .product-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        .product-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .product-quantity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .qty-btn:hover {
+            background: #f1f5f9;
+        }
+        .qty-value {
+            font-weight: 600;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        /* Discount Section */
+        .discount-section {
+            padding: 24px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mileage-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .mileage-input {
+            width: 100px;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: right;
+        }
+        .mileage-input:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+        .mileage-label {
+            flex: 1;
+            color: #475569;
+            cursor: pointer;
+        }
+        .mileage-amount {
+            font-weight: 600;
+            color: #11998e;
+        }
+
+        /* Coupon Section */
+        .coupon-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .coupon-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .coupon-btn {
+            padding: 12px 20px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .coupon-btn:hover {
+            background: #e2e8f0;
+        }
+        .coupon-applied {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #dcfce7;
+            border-radius: 8px;
+            color: #15803d;
+            font-size: 0.9rem;
+        }
+        .coupon-applied.show {
+            display: flex;
+        }
+        .coupon-remove {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Price Summary */
+        .price-summary {
+            padding: 24px 0;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #64748b;
+        }
+        .price-row.discount {
+            color: #dc2626;
+        }
+        .price-row.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 2px solid #1e293b;
+        }
+
+        /* Right Panel - Payment Widget */
+        .payment-panel {
+            position: sticky;
+            top: 24px;
+        }
+        .widget-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+        .widget-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .widget-title::before {
+            content: '💳';
+        }
+
+        /* Payment Widget Area */
+        #payment-widget-area {
+            min-height: 300px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+        }
+        #payment-widget-area.loading::after {
+            content: '결제 위젯 로딩 중...';
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        #payment-widget-area.error {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+        #payment-widget-area.error::after {
+            content: '위젯 로딩 실패';
+            color: #dc2626;
+        }
+        #payment-widget-area.loaded {
+            border: none;
+            background: transparent;
+            min-height: auto;
+        }
+        #payment-widget-area.loaded::after {
+            content: none;
+        }
+
+        /* Checkout Button */
+        .checkout-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.3);
+        }
+        .checkout-btn:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .checkout-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .checkout-btn.loading .spinner {
+            display: block;
+        }
+        .checkout-btn.loading .btn-text {
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Terms Notice */
+        .terms-notice {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        .terms-notice a {
+            color: #11998e;
+            text-decoration: none;
+        }
+        .terms-notice a:hover {
+            text-decoration: underline;
+        }
+
+        /* Toast Message */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error {
+            background: #dc2626;
+        }
+        .toast.success {
+            background: #16a34a;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .settings-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .settings-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .settings-content {
+            display: none;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        .settings-row {
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .settings-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        .settings-select:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="../index.html" class="logo">
+            <span class="logo-icon">🛍️</span>
+            TechMall
+        </a>
+        <nav class="nav-links">
+            <a href="#">신상품</a>
+            <a href="#">베스트</a>
+            <a href="#">이벤트</a>
+            <a href="#">고객센터</a>
+        </nav>
+        <a href="../index.html" class="back-link">← 예제 목록으로</a>
+    </header>
+
+    <main class="main-content">
+        <!-- Left: Order Summary -->
+        <div class="order-panel">
+            <h1 class="panel-title">주문서</h1>
+
+            <!-- Product Item -->
+            <div class="product-item">
+                <div class="product-image">🎧</div>
+                <div class="product-info">
+                    <div class="product-name">프리미엄 무선 이어폰 Pro Max</div>
+                    <div class="product-desc">노이즈 캔슬링 / 30시간 재생 / IPX5 방수</div>
+                    <div class="product-price">₩<span id="unit-price">4,000</span></div>
+                    <div class="product-quantity">
+                        <button class="qty-btn" id="qty-decrease">−</button>
+                        <span class="qty-value" id="quantity">1</span>
+                        <button class="qty-btn" id="qty-increase">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Section -->
+            <div class="discount-section">
+                <div class="section-title">🎁 할인 적용</div>
+
+                <div class="mileage-row">
+                    <label for="use-mileage" class="mileage-label">적립금 사용</label>
+                    <input type="number" id="use-mileage" class="mileage-input"
+                           min="0" max="3000" step="100" value="0">
+                    <span class="mileage-amount">/ 3,000원 보유</span>
+                </div>
+
+                <div class="coupon-row">
+                    <input type="text" class="coupon-input" id="coupon-code" placeholder="쿠폰 코드 입력">
+                    <button class="coupon-btn" id="coupon-apply-btn">적용</button>
+                </div>
+                <div class="coupon-applied" id="coupon-applied">
+                    <span>🎉</span>
+                    <span id="coupon-name">첫 구매 10% 할인</span>
+                    <button class="coupon-remove" id="coupon-remove-btn">제거</button>
+                </div>
+            </div>
+
+            <!-- Price Summary -->
+            <div class="price-summary">
+                <div class="price-row">
+                    <span>상품 금액</span>
+                    <span>₩<span id="subtotal">39,000</span></span>
+                </div>
+                <div class="price-row">
+                    <span>배송비</span>
+                    <span>무료</span>
+                </div>
+                <div class="price-row discount" id="mileage-row" style="display: none;">
+                    <span>적립금 할인</span>
+                    <span>-₩<span id="mileage-discount">3,000</span></span>
+                </div>
+                <div class="price-row discount" id="coupon-row" style="display: none;">
+                    <span>쿠폰 할인</span>
+                    <span>-₩<span id="coupon-discount">0</span></span>
+                </div>
+                <div class="price-row total">
+                    <span>총 결제 금액</span>
+                    <span>₩<span id="total-price">4,000</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Payment Widget -->
+        <div class="payment-panel">
+            <div class="widget-container">
+                <h2 class="widget-title">결제 수단</h2>
+                <div id="payment-widget-area" class="loading"></div>
+            </div>
+
+            <button class="checkout-btn" id="checkout-btn" disabled>
+                <span class="spinner"></span>
+                <span class="btn-text">₩<span id="btn-price">39,000</span> 결제하기</span>
+            </button>
+
+            <div class="terms-notice">
+                주문 내용을 확인했으며, <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의합니다.
+                위 주문 내용을 확인하였으며, 결제에 동의합니다.
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+        <div class="settings-header" onclick="toggleSettings()">
+            <span class="settings-title">환경 설정</span>
+            <span class="settings-toggle">▲</span>
+        </div>
+        <div class="settings-content">
+            <div class="settings-row">
+                <label class="settings-label">실행 환경</label>
+                <select class="settings-select" id="env" onchange="changeEnv()">
+                    <option value="development">Development (테스트)</option>
+                    <option value="stage">Stage</option>
+                    <option value="production" selected>Production (실서비스)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- CDN 방식으로 SDK 로드 (@bootpay/client-js UMD 버전) -->
+    <script src="https://cdn.jsdelivr.net/npm/@bootpay/client-js@5.2.0/dist/index.umd.js"></script>
+    <script>
+        // UMD 버전은 window.BootpayWidget을 자동으로 설정함
+        // BootpayWidget은 전역 객체로 직접 사용 가능
+
+        // ========================================
+        // 환경별 설정 (development, stage, production)
+        // ========================================
+        const ENV_CONFIG = {
+            development: {
+                application_id: '692682dfb2084136e29ac1d9'
+            },
+            stage: {
+                application_id: '6927d523472c3a791b6250cd'
+            },
+            production: {
+                application_id: '6927d523472c3a791b6250cd'
+            }
+        }
+
+        // 현재 환경 (localhost면 development, 아니면 production)
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        let currentEnv = isLocalDev ? 'development' : 'production'
+
+        // 현재 환경의 설정 가져오기
+        function getCurrentConfig() {
+            return ENV_CONFIG[currentEnv]
+        }
+
+        // 주문 정보
+        const orderInfo = {
+            productId: 'premium_earphone',
+            unitPrice: 4000,
+            quantity: 1,
+            mileageDiscount: 0,
+            couponDiscount: 0,
+            couponCode: null
+        }
+
+        // DOM 로드 후 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // localhost면 development 강제, 아니면 저장된 환경 사용
+            if (isLocalDev) {
+                currentEnv = 'development'
+            } else {
+                currentEnv = localStorage.getItem('bootpay_widget_env') || 'production'
+            }
+
+            // 환경 선택 UI 초기화
+            const envSelect = document.getElementById('env')
+            if (envSelect) {
+                envSelect.value = currentEnv
+            }
+
+            // Widget SDK 환경 설정 (CDN에서 로드된 전역 객체 사용)
+            BootpayWidget.setEnvironmentMode(currentEnv)
+
+            console.log(`[Widget CDN] 환경: ${currentEnv}, App ID: ${getCurrentConfig().application_id}`)
+
+            initWidget()
+            bindEventListeners()
+        })
+
+        // ========================================
+        // 이벤트 리스너 바인딩
+        // ========================================
+
+        function bindEventListeners() {
+            // 적립금 입력
+            const mileageInput = document.getElementById('use-mileage')
+            if (mileageInput) {
+                mileageInput.addEventListener('input', function() {
+                    applyMileage(this.value)
+                })
+            }
+
+            // 수량 변경 버튼
+            document.getElementById('qty-decrease')?.addEventListener('click', () => changeQuantity(-1))
+            document.getElementById('qty-increase')?.addEventListener('click', () => changeQuantity(1))
+
+            // 쿠폰 적용/제거 버튼
+            document.getElementById('coupon-apply-btn')?.addEventListener('click', applyCoupon)
+            document.getElementById('coupon-remove-btn')?.addEventListener('click', removeCoupon)
+
+            // 결제 버튼
+            document.getElementById('checkout-btn')?.addEventListener('click', requestPayment)
+        }
+
+        // ========================================
+        // 환경 변경
+        // ========================================
+
+        function changeEnv() {
+            const envSelect = document.getElementById('env')
+            currentEnv = envSelect.value
+
+            // 환경 저장
+            localStorage.setItem('bootpay_widget_env', currentEnv)
+
+            // Widget SDK 환경 변경
+            BootpayWidget.setEnvironmentMode(currentEnv)
+
+            console.log(`[Widget CDN] 환경 변경: ${currentEnv}, App ID: ${getCurrentConfig().application_id}`)
+
+            // 알림
+            const envNames = {
+                development: 'Development (테스트)',
+                stage: 'Stage',
+                production: 'Production (실서비스)'
+            }
+            showToast(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다. 위젯을 재로드합니다.`)
+
+            // 위젯 재로드
+            BootpayWidget.destroy()
+            initWidget()
+        }
+
+        function toggleSettings() {
+            const content = document.querySelector('.settings-content')
+            const toggle = document.querySelector('.settings-toggle')
+            content.classList.toggle('show')
+            toggle.textContent = content.classList.contains('show') ? '▼' : '▲'
+        }
+
+        // ========================================
+        // 결제 위젯 초기화
+        // ========================================
+
+        function initWidget() {
+            const widgetArea = document.getElementById('payment-widget-area')
+            widgetArea.className = 'loading'
+
+            const config = getCurrentConfig()
+            const isSandbox = currentEnv === 'development' || currentEnv === 'stage'
+
+            try {
+                // ------ STEP 1. 위젯 렌더링 ------
+                BootpayWidget.render('#payment-widget-area', {
+                    application_id: config.application_id,
+                    price: calculateTotalPrice(),
+                    sandbox: isSandbox,
+                    widget_key: 'default-widget',
+                    use_terms: true,
+                    extra: {
+                        hide_title: true,
+                    },
+
+                    hooks: {
+                        // 위젯 렌더링 완료
+                        ready: function() {
+                            console.log('결제 위젯 준비 완료')
+                            const area = document.getElementById('payment-widget-area')
+                            area.classList.remove('loading')
+                            area.classList.add('loaded')
+                        },
+                        // 모든 약관 동의 시
+                        allTermsAccepted: function() {
+                            console.log('모든 약관 동의 완료')
+                            document.getElementById('checkout-btn').disabled = false
+                        },
+                        // 결제수단 변경 시
+                        paymentMethodUpdated: function(data) {
+                            console.log('결제수단 변경:', data)
+                            document.getElementById('checkout-btn').disabled = !data.completed
+                        },
+                        // 약관 동의 상태 변경 시
+                        termsConsentUpdated: function() {
+                            console.log('약관 동의 상태 변경')
+                        },
+                        // 위젯 크기 변경 시
+                        resize: function() {
+                            console.log('위젯 크기 변경')
+                        }
+                    }
+                })
+
+                console.log('위젯 초기화 완료 - Sandbox:', isSandbox)
+            } catch (error) {
+                console.error('위젯 초기화 실패:', error)
+                widgetArea.className = 'error'
+                showToast('위젯 로딩에 실패했습니다: ' + error.message, 'error')
+            }
+        }
+
+        // ========================================
+        // 가격 계산
+        // ========================================
+
+        function calculateSubtotal() {
+            return orderInfo.unitPrice * orderInfo.quantity
+        }
+
+        function calculateTotalPrice() {
+            const subtotal = calculateSubtotal()
+            const total = subtotal - orderInfo.mileageDiscount - orderInfo.couponDiscount
+            return Math.max(0, total)
+        }
+
+        function updatePriceDisplay() {
+            const subtotal = calculateSubtotal()
+            const total = calculateTotalPrice()
+
+            document.getElementById('subtotal').textContent = subtotal.toLocaleString()
+            document.getElementById('total-price').textContent = total.toLocaleString()
+            document.getElementById('btn-price').textContent = total.toLocaleString()
+
+            // 적립금 할인 행 표시/숨김
+            const mileageRow = document.getElementById('mileage-row')
+            if (orderInfo.mileageDiscount > 0) {
+                mileageRow.style.display = 'flex'
+                document.getElementById('mileage-discount').textContent = orderInfo.mileageDiscount.toLocaleString()
+            } else {
+                mileageRow.style.display = 'none'
+            }
+
+            // 쿠폰 할인 행 표시/숨김
+            const couponRow = document.getElementById('coupon-row')
+            if (orderInfo.couponDiscount > 0) {
+                couponRow.style.display = 'flex'
+                document.getElementById('coupon-discount').textContent = orderInfo.couponDiscount.toLocaleString()
+            } else {
+                couponRow.style.display = 'none'
+            }
+
+            // ------ STEP 2. 금액 업데이트 ------
+            // 위젯에 변경된 금액 반영
+            BootpayWidget.update({ price: total })
+        }
+
+        // ========================================
+        // 수량 변경
+        // ========================================
+
+        function changeQuantity(delta) {
+            const newQuantity = orderInfo.quantity + delta
+            if (newQuantity < 1 || newQuantity > 10) return
+
+            orderInfo.quantity = newQuantity
+            document.getElementById('quantity').textContent = newQuantity
+
+            updatePriceDisplay()
+        }
+
+        // ========================================
+        // 적립금 적용
+        // ========================================
+
+        const MAX_MILEAGE = 3000  // 보유 적립금
+
+        function applyMileage(value) {
+            const input = document.getElementById('use-mileage')
+            let amount = parseInt(value) || 0
+
+            // 범위 제한 (0 ~ 보유 적립금)
+            if (amount < 0) amount = 0
+            if (amount > MAX_MILEAGE) amount = MAX_MILEAGE
+
+            // 입력값 보정
+            input.value = amount
+
+            orderInfo.mileageDiscount = amount
+            updatePriceDisplay()
+
+            if (amount > 0) {
+                showToast(`적립금 ${amount.toLocaleString()}원이 적용되었습니다.`, 'success')
+            }
+        }
+
+        // ========================================
+        // 쿠폰 적용
+        // ========================================
+
+        const VALID_COUPONS = {
+            'WELCOME10': { name: '첫 구매 10% 할인', type: 'percent', value: 10 },
+            'SAVE5000': { name: '5,000원 할인', type: 'fixed', value: 5000 },
+            'SUMMER20': { name: '여름 특가 20% 할인', type: 'percent', value: 20 }
+        }
+
+        function applyCoupon() {
+            const input = document.getElementById('coupon-code')
+            const code = input.value.trim().toUpperCase()
+
+            if (!code) {
+                showToast('쿠폰 코드를 입력해주세요.', 'error')
+                return
+            }
+
+            const coupon = VALID_COUPONS[code]
+            if (!coupon) {
+                showToast('유효하지 않은 쿠폰 코드입니다.', 'error')
+                return
+            }
+
+            // 쿠폰 할인 계산
+            const subtotal = calculateSubtotal()
+            if (coupon.type === 'percent') {
+                orderInfo.couponDiscount = Math.floor(subtotal * (coupon.value / 100))
+            } else {
+                orderInfo.couponDiscount = coupon.value
+            }
+            orderInfo.couponCode = code
+
+            // UI 업데이트
+            document.getElementById('coupon-name').textContent = coupon.name
+            document.getElementById('coupon-applied').classList.add('show')
+            document.querySelector('.coupon-row').style.display = 'none'
+            input.value = ''
+
+            updatePriceDisplay()
+            showToast(`쿠폰이 적용되었습니다: ${coupon.name}`, 'success')
+        }
+
+        function removeCoupon() {
+            orderInfo.couponDiscount = 0
+            orderInfo.couponCode = null
+
+            document.getElementById('coupon-applied').classList.remove('show')
+            document.querySelector('.coupon-row').style.display = 'flex'
+
+            updatePriceDisplay()
+            showToast('쿠폰이 제거되었습니다.')
+        }
+
+        // ========================================
+        // 결제 요청
+        // ========================================
+
+        async function requestPayment() {
+            const checkoutBtn = document.getElementById('checkout-btn')
+            checkoutBtn.classList.add('loading')
+            checkoutBtn.disabled = true
+
+            try {
+                // ------ STEP 3. 결제 요청 ------
+
+                // 3-1. 가맹점 서버 호출 (주문 생성)
+                // ⭐ 중요: 서버에서 금액을 계산하여 위변조 방지
+                console.log('서버에 주문 생성 요청...')
+
+                const paymentParams = BootpayWidget.currentPaymentParameters()
+
+                const orderResponse = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: orderInfo.productId,
+                        quantity: orderInfo.quantity,
+                        coupon_code: orderInfo.couponCode,
+                        mileage_amount: orderInfo.mileageDiscount,
+                        pg: paymentParams.pg,
+                        method: paymentParams.method
+                    })
+                })
+
+                const orderData = await orderResponse.json()
+
+                if (!orderData.success) {
+                    throw new Error(orderData.message || '주문 생성 실패')
+                }
+
+                console.log('주문 생성 완료:', orderData)
+
+                // 3-2. 결제 요청
+                // ⭐ 서버에서 계산한 금액(orderData.price)으로 결제 진행
+                await BootpayWidget.requestPayment({
+                    application_id: getCurrentConfig().application_id,
+                    pg: orderData.pg,
+                    method: orderData.method,
+                    order_id: orderData.order_id,
+                    order_name: orderData.order_name,
+                    price: orderData.price,
+                    redirect_url: window.location.origin + '/cdn/widget/widget_result.html',
+                    user: {
+                        id: 'demo_user_' + Date.now(),
+                        username: '홍길동',
+                        phone: '01012345678',
+                        email: 'demo@example.com'
+                    }
+                })
+            } catch (error) {
+                console.error('결제 실패:', error)
+                showToast('결제 실패: ' + (error.message || '알 수 없는 오류'), 'error')
+            } finally {
+                checkoutBtn.classList.remove('loading')
+                checkoutBtn.disabled = false
+            }
+        }
+
+        // ========================================
+        // Toast 메시지
+        // ========================================
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast')
+            toast.textContent = message
+            toast.className = 'toast show ' + type
+
+            setTimeout(() => {
+                toast.className = 'toast'
+            }, 3000)
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제링크 발송 - Bootpay Commerce (CDN)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .back-link {
+            color: #f59e0b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 64px 20px 48px;
+            background: linear-gradient(180deg, #f8fafc 0%, #fef3c7 100%);
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .hero p {
+            color: #64748b;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Product Selection */
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title .step {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .section-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        /* Product Cards */
+        .product-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .product-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .product-card:hover {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .product-card.selected {
+            border-color: #f59e0b;
+            background: #fffbeb;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .product-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .product-price {
+            font-weight: 700;
+            color: #f59e0b;
+        }
+        .product-desc {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        /* Custom Amount */
+        .custom-amount-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .custom-amount-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .custom-amount-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #f59e0b;
+        }
+        .custom-amount-input {
+            margin-top: 12px;
+            display: none;
+        }
+        .custom-amount-input.show {
+            display: block;
+        }
+
+        /* Form Fields */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .form-label .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+        .form-hint {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 6px;
+        }
+
+        /* Notification Method */
+        .notification-methods {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .notification-method {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .notification-method:hover {
+            border-color: #f59e0b;
+        }
+        .notification-method.selected {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .notification-method input {
+            display: none;
+        }
+        .notification-method-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .notification-method-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+        }
+        .submit-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .submit-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Preview */
+        .preview-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+        .preview-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        .preview-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .preview-value {
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .settings-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .settings-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .settings-content {
+            display: none;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        .settings-row {
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .settings-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        .settings-select:focus {
+            outline: none;
+            border-color: #f59e0b;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid white;
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            color: white;
+            font-size: 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="../index.html" class="logo">
+            <span class="logo-icon">🔗</span>
+            결제링크 발송
+        </a>
+        <a href="../index.html" class="back-link">← 예제 목록으로</a>
+    </header>
+
+    <section class="hero">
+        <h1>결제링크 발송</h1>
+        <p>고객에게 결제 링크를 이메일 또는 SMS로 발송하세요.<br>고객이 링크를 클릭하면 결제를 진행할 수 있습니다.</p>
+    </section>
+
+    <div class="main-content">
+        <!-- 상품 선택 -->
+        <div class="section-card">
+            <h2 class="section-title">
+                <span class="step">1</span>
+                상품 선택
+            </h2>
+            <p class="section-desc">결제를 요청할 상품을 선택하세요.</p>
+
+            <div class="product-cards">
+                <div class="product-card selected" data-product="basic" data-price="29900" onclick="selectProduct(this)">
+                    <div class="product-header">
+                        <span class="product-name">Basic 플랜</span>
+                        <span class="product-price">₩29,900</span>
+                    </div>
+                    <p class="product-desc">개인 사용자를 위한 기본 플랜</p>
+                </div>
+                <div class="product-card" data-product="pro" data-price="99000" onclick="selectProduct(this)">
+                    <div class="product-header">
+                        <span class="product-name">Pro 플랜</span>
+                        <span class="product-price">₩99,000</span>
+                    </div>
+                    <p class="product-desc">팀과 비즈니스를 위한 프로 플랜</p>
+                </div>
+                <div class="product-card" data-product="enterprise" data-price="299000" onclick="selectProduct(this)">
+                    <div class="product-header">
+                        <span class="product-name">Enterprise 플랜</span>
+                        <span class="product-price">₩299,000</span>
+                    </div>
+                    <p class="product-desc">대규모 조직을 위한 엔터프라이즈 솔루션</p>
+                </div>
+            </div>
+
+            <div class="custom-amount-section">
+                <label class="custom-amount-toggle">
+                    <input type="checkbox" id="customAmountCheck" onchange="toggleCustomAmount()">
+                    직접 금액 입력
+                </label>
+                <div class="custom-amount-input" id="customAmountInput">
+                    <div class="form-group">
+                        <label class="form-label">결제 금액</label>
+                        <input type="number" class="form-input" id="customPrice" placeholder="금액을 입력하세요" min="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">상품명</label>
+                        <input type="text" class="form-input" id="customName" placeholder="상품명을 입력하세요">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 수신자 정보 -->
+        <div class="section-card">
+            <h2 class="section-title">
+                <span class="step">2</span>
+                수신자 정보
+            </h2>
+            <p class="section-desc">결제 링크를 받을 고객 정보를 입력하세요.</p>
+
+            <div class="form-group">
+                <label class="form-label">고객명 <span class="required">*</span></label>
+                <input type="text" class="form-input" id="customerName" placeholder="홍길동" required>
+            </div>
+
+            <div class="notification-methods">
+                <label class="notification-method selected" onclick="selectNotificationMethod('email')">
+                    <input type="radio" name="notificationMethod" value="email" checked>
+                    <div class="notification-method-icon">📧</div>
+                    <div class="notification-method-label">이메일</div>
+                </label>
+                <label class="notification-method" onclick="selectNotificationMethod('sms')">
+                    <input type="radio" name="notificationMethod" value="sms">
+                    <div class="notification-method-icon">📱</div>
+                    <div class="notification-method-label">SMS</div>
+                </label>
+                <label class="notification-method" onclick="selectNotificationMethod('both')">
+                    <input type="radio" name="notificationMethod" value="both">
+                    <div class="notification-method-icon">📬</div>
+                    <div class="notification-method-label">둘 다</div>
+                </label>
+            </div>
+
+            <div class="form-group" id="emailGroup">
+                <label class="form-label">이메일 주소 <span class="required">*</span></label>
+                <input type="email" class="form-input" id="customerEmail" placeholder="customer@example.com">
+                <p class="form-hint">결제 링크가 이 주소로 발송됩니다.</p>
+            </div>
+
+            <div class="form-group" id="phoneGroup" style="display: none;">
+                <label class="form-label">휴대폰 번호 <span class="required">*</span></label>
+                <input type="tel" class="form-input" id="customerPhone" placeholder="010-1234-5678">
+                <p class="form-hint">결제 링크가 SMS로 발송됩니다.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">메모 (선택)</label>
+                <input type="text" class="form-input" id="orderMemo" placeholder="고객에게 전달할 메시지">
+            </div>
+
+            <!-- 미리보기 -->
+            <div class="preview-section">
+                <div class="preview-title">발송 정보 미리보기</div>
+                <div class="preview-item">
+                    <span class="preview-label">상품명</span>
+                    <span class="preview-value" id="previewProduct">Basic 플랜</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">결제금액</span>
+                    <span class="preview-value" id="previewPrice">₩29,900</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">수신자</span>
+                    <span class="preview-value" id="previewRecipient">-</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">발송방법</span>
+                    <span class="preview-value" id="previewMethod">이메일</span>
+                </div>
+            </div>
+
+            <button class="submit-btn" onclick="sendPaymentLink()">
+                결제링크 발송하기
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+        <div class="settings-header" onclick="toggleSettings()">
+            <span class="settings-title">환경 설정</span>
+            <span class="settings-toggle">▲</span>
+        </div>
+        <div class="settings-content">
+            <div class="settings-row">
+                <label class="settings-label">실행 환경</label>
+                <select class="settings-select" id="env" onchange="changeEnv()">
+                    <option value="development">Development (테스트)</option>
+                    <option value="stage">Stage</option>
+                    <option value="production" selected>Production (실서비스)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">결제 링크를 생성하고 있습니다...</p>
+    </div>
+
+    <!-- CDN 방식으로 SDK 로드 (필요시 사용) -->
+    <script src="https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js"></script>
+    <script>
+        // ========================================
+        // 환경별 설정 (development, stage, production)
+        // ========================================
+        const ENV_CONFIG = {
+            development: {
+                products: {
+                    basic: { product_id: '69268625d8df8fa1837cf661' },
+                    pro: { product_id: '692686e5d8df8fa1837cf66b' },
+                    enterprise: { product_id: '69268783d8df8fa1837cf675' }
+                }
+            },
+            stage: {
+                products: {
+                    basic: { product_id: '6927d893ff30795ff003d374' },
+                    pro: { product_id: '6927d8f9ff30795ff003d379' },
+                    enterprise: { product_id: '6927d8f9ff30795ff003d379' }
+                }
+            },
+            production: {
+                products: {
+                    basic: { product_id: '6927d893ff30795ff003d374' },
+                    pro: { product_id: '6927d8f9ff30795ff003d379' },
+                    enterprise: { product_id: '6927d8f9ff30795ff003d379' }
+                }
+            }
+        }
+
+        // 상품 기본 정보
+        const PRODUCT_INFO = {
+            basic: {
+                name: 'Basic 플랜',
+                price: 29900,
+                desc: '개인 사용자를 위한 기본 플랜'
+            },
+            pro: {
+                name: 'Pro 플랜',
+                price: 99000,
+                desc: '팀과 비즈니스를 위한 프로 플랜'
+            },
+            enterprise: {
+                name: 'Enterprise 플랜',
+                price: 299000,
+                desc: '대규모 조직을 위한 엔터프라이즈 솔루션'
+            }
+        }
+
+        // 현재 환경 (localhost면 development, 아니면 production)
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        let currentEnv = isLocalDev ? 'development' : 'production'
+
+        // 현재 선택된 상품
+        let selectedProduct = 'basic'
+
+        // 현재 알림 방법
+        let notificationMethod = 'email'
+
+        // 직접 금액 입력 모드
+        let isCustomAmount = false
+
+        // 현재 환경의 설정 가져오기
+        function getCurrentConfig() {
+            return ENV_CONFIG[currentEnv]
+        }
+
+        // DOM이 로드된 후 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            // localhost면 development 강제, 아니면 저장된 환경 사용
+            if (isLocalDev) {
+                currentEnv = 'development'
+            } else {
+                currentEnv = localStorage.getItem('bootpay_env') || 'production'
+            }
+
+            // 환경 선택 UI 초기화
+            const envSelect = document.getElementById('env')
+            if (envSelect) {
+                envSelect.value = currentEnv
+            }
+
+            console.log(`[Payment Link CDN] 환경: ${currentEnv}`)
+
+            // 입력 필드 이벤트 리스너 (미리보기 업데이트)
+            document.getElementById('customerName').addEventListener('input', updatePreview)
+            document.getElementById('customerEmail').addEventListener('input', updatePreview)
+            document.getElementById('customerPhone').addEventListener('input', updatePreview)
+            document.getElementById('customPrice').addEventListener('input', updatePreview)
+            document.getElementById('customName').addEventListener('input', updatePreview)
+
+            // 초기 미리보기 업데이트
+            updatePreview()
+        })
+
+        // 환경 변경
+        function changeEnv() {
+            const envSelect = document.getElementById('env')
+            currentEnv = envSelect.value
+
+            // 환경 저장
+            localStorage.setItem('bootpay_env', currentEnv)
+
+            console.log(`[Payment Link CDN] 환경 변경: ${currentEnv}`)
+
+            const envNames = {
+                development: 'Development (테스트)',
+                stage: 'Stage',
+                production: 'Production (실서비스)'
+            }
+            alert(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다.`)
+        }
+
+        // 상품 선택
+        function selectProduct(element) {
+            // 모든 상품 카드에서 selected 제거
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('selected')
+            })
+
+            // 선택한 카드에 selected 추가
+            element.classList.add('selected')
+
+            // 선택한 상품 저장
+            selectedProduct = element.dataset.product
+
+            // 미리보기 업데이트
+            updatePreview()
+        }
+
+        // 직접 금액 입력 토글
+        function toggleCustomAmount() {
+            const checkbox = document.getElementById('customAmountCheck')
+            const customInput = document.getElementById('customAmountInput')
+
+            isCustomAmount = checkbox.checked
+
+            if (isCustomAmount) {
+                customInput.classList.add('show')
+                // 상품 카드 선택 해제
+                document.querySelectorAll('.product-card').forEach(card => {
+                    card.classList.remove('selected')
+                })
+            } else {
+                customInput.classList.remove('show')
+                // 첫 번째 상품 카드 선택
+                const firstCard = document.querySelector('.product-card')
+                if (firstCard) {
+                    firstCard.classList.add('selected')
+                    selectedProduct = firstCard.dataset.product
+                }
+            }
+
+            updatePreview()
+        }
+
+        // 알림 방법 선택
+        function selectNotificationMethod(method) {
+            notificationMethod = method
+
+            // UI 업데이트
+            document.querySelectorAll('.notification-method').forEach(el => {
+                el.classList.remove('selected')
+            })
+            document.querySelector(`input[value="${method}"]`).closest('.notification-method').classList.add('selected')
+
+            // 이메일/전화번호 필드 표시/숨김
+            const emailGroup = document.getElementById('emailGroup')
+            const phoneGroup = document.getElementById('phoneGroup')
+
+            if (method === 'email') {
+                emailGroup.style.display = 'block'
+                phoneGroup.style.display = 'none'
+            } else if (method === 'sms') {
+                emailGroup.style.display = 'none'
+                phoneGroup.style.display = 'block'
+            } else {
+                // both
+                emailGroup.style.display = 'block'
+                phoneGroup.style.display = 'block'
+            }
+
+            updatePreview()
+        }
+
+        // 미리보기 업데이트
+        function updatePreview() {
+            const previewProduct = document.getElementById('previewProduct')
+            const previewPrice = document.getElementById('previewPrice')
+            const previewRecipient = document.getElementById('previewRecipient')
+            const previewMethod = document.getElementById('previewMethod')
+
+            // 상품명/가격
+            if (isCustomAmount) {
+                const customName = document.getElementById('customName').value || '직접 입력 상품'
+                const customPrice = document.getElementById('customPrice').value || 0
+                previewProduct.textContent = customName
+                previewPrice.textContent = `₩${Number(customPrice).toLocaleString()}`
+            } else {
+                const product = PRODUCT_INFO[selectedProduct]
+                previewProduct.textContent = product.name
+                previewPrice.textContent = `₩${product.price.toLocaleString()}`
+            }
+
+            // 수신자
+            const customerName = document.getElementById('customerName').value
+            const customerEmail = document.getElementById('customerEmail').value
+            const customerPhone = document.getElementById('customerPhone').value
+
+            let recipientText = customerName || '-'
+            if (notificationMethod === 'email' && customerEmail) {
+                recipientText = `${customerName || '-'} (${customerEmail})`
+            } else if (notificationMethod === 'sms' && customerPhone) {
+                recipientText = `${customerName || '-'} (${customerPhone})`
+            } else if (notificationMethod === 'both') {
+                const contacts = []
+                if (customerEmail) contacts.push(customerEmail)
+                if (customerPhone) contacts.push(customerPhone)
+                if (contacts.length > 0) {
+                    recipientText = `${customerName || '-'} (${contacts.join(', ')})`
+                }
+            }
+            previewRecipient.textContent = recipientText
+
+            // 발송 방법
+            const methodNames = {
+                email: '이메일',
+                sms: 'SMS',
+                both: '이메일 + SMS'
+            }
+            previewMethod.textContent = methodNames[notificationMethod]
+        }
+
+        // 설정 패널 토글
+        function toggleSettings() {
+            const content = document.querySelector('.settings-content')
+            const toggle = document.querySelector('.settings-toggle')
+            content.classList.toggle('show')
+            toggle.textContent = content.classList.contains('show') ? '▼' : '▲'
+        }
+
+        // 입력 검증
+        function validateInputs() {
+            const customerName = document.getElementById('customerName').value.trim()
+            const customerEmail = document.getElementById('customerEmail').value.trim()
+            const customerPhone = document.getElementById('customerPhone').value.trim()
+
+            if (!customerName) {
+                alert('고객명을 입력해주세요.')
+                return false
+            }
+
+            if (notificationMethod === 'email' || notificationMethod === 'both') {
+                if (!customerEmail) {
+                    alert('이메일 주소를 입력해주세요.')
+                    return false
+                }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+                    alert('올바른 이메일 형식을 입력해주세요.')
+                    return false
+                }
+            }
+
+            if (notificationMethod === 'sms' || notificationMethod === 'both') {
+                if (!customerPhone) {
+                    alert('휴대폰 번호를 입력해주세요.')
+                    return false
+                }
+                if (!/^[\d-]+$/.test(customerPhone)) {
+                    alert('올바른 휴대폰 번호를 입력해주세요.')
+                    return false
+                }
+            }
+
+            if (isCustomAmount) {
+                const customPrice = document.getElementById('customPrice').value
+                const customName = document.getElementById('customName').value.trim()
+
+                if (!customPrice || customPrice < 100) {
+                    alert('결제 금액을 100원 이상 입력해주세요.')
+                    return false
+                }
+                if (!customName) {
+                    alert('상품명을 입력해주세요.')
+                    return false
+                }
+            }
+
+            return true
+        }
+
+        // 전화번호 포맷팅 (하이픈 제거)
+        function formatPhone(phone) {
+            return phone.replace(/-/g, '')
+        }
+
+        // 결제링크 발송
+        async function sendPaymentLink() {
+            if (!validateInputs()) return
+
+            const loadingOverlay = document.getElementById('loadingOverlay')
+            loadingOverlay.classList.add('show')
+
+            try {
+                const config = getCurrentConfig()
+                const customerName = document.getElementById('customerName').value.trim()
+                const customerEmail = document.getElementById('customerEmail').value.trim()
+                const customerPhone = formatPhone(document.getElementById('customerPhone').value.trim())
+                const orderMemo = document.getElementById('orderMemo').value.trim()
+
+                // 상품 정보
+                let productName, price, productId
+
+                if (isCustomAmount) {
+                    productName = document.getElementById('customName').value.trim()
+                    price = parseInt(document.getElementById('customPrice').value)
+                    productId = null
+                } else {
+                    const product = PRODUCT_INFO[selectedProduct]
+                    productName = product.name
+                    price = product.price
+                    productId = config.products[selectedProduct].product_id
+                }
+
+                console.log(`[결제링크 발송 CDN] 환경: ${currentEnv}, 상품: ${productName}, 가격: ${price}`)
+
+                // ========================================
+                // 서버로 결제링크 생성 요청 (REST API)
+                // ========================================
+                console.log('서버에 결제링크 생성 요청...')
+
+                const orderResponse = await fetch('/api/orders/payment-link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        product_name: productName,
+                        price: price,
+                        customer_name: customerName,
+                        customer_email: customerEmail,
+                        customer_phone: customerPhone,
+                        notification_method: notificationMethod,
+                        memo: orderMemo,
+                        redirect_url: window.location.origin + '/cdn/payment-link/payment-link_result.html',
+                        env: currentEnv
+                    })
+                })
+
+                const orderData = await orderResponse.json()
+
+                if (!orderData.success) {
+                    throw new Error(orderData.message || '결제링크 생성 실패')
+                }
+
+                console.log('결제링크 생성 완료:', orderData)
+
+                // ========================================
+                // 결과 페이지로 이동
+                // ========================================
+                const resultParams = new URLSearchParams({
+                    order_id: orderData.order_id,
+                    product_name: productName,
+                    price: price,
+                    customer_name: customerName,
+                    notification_method: notificationMethod,
+                    env: currentEnv,
+                    status: 'sent'
+                })
+
+                if (customerEmail) resultParams.append('customer_email', customerEmail)
+                if (customerPhone) resultParams.append('customer_phone', customerPhone)
+                if (orderData.invoice_id) resultParams.append('invoice_id', orderData.invoice_id)
+
+                window.location.href = `payment-link_result.html?${resultParams.toString()}`
+
+            } catch (error) {
+                console.error('Payment Link Error:', error)
+                alert('결제링크 발송 중 오류가 발생했습니다:\n' + error.message)
+            } finally {
+                loadingOverlay.classList.remove('show')
+            }
+        }
+    </script>
+</body>
+</html>

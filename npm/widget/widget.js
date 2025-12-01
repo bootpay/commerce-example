@@ -19,8 +19,9 @@ const ENV_CONFIG = {
     }
 }
 
-// 현재 환경
-let currentEnv = 'production'
+// 현재 환경 (localhost면 development, 아니면 production)
+const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+let currentEnv = isLocalDev ? 'development' : 'production'
 
 // 현재 환경의 설정 가져오기
 function getCurrentConfig() {
@@ -39,9 +40,12 @@ const orderInfo = {
 
 // DOM 로드 후 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    // 저장된 환경 불러오기 (기본값: production)
-    const savedEnv = localStorage.getItem('bootpay_widget_env') || 'production'
-    currentEnv = savedEnv
+    // localhost면 development 강제, 아니면 저장된 환경 사용
+    if (isLocalDev) {
+        currentEnv = 'development'
+    } else {
+        currentEnv = localStorage.getItem('bootpay_widget_env') || 'production'
+    }
 
     // 환경 선택 UI 초기화
     const envSelect = document.getElementById('env')
@@ -368,7 +372,7 @@ async function requestPayment() {
             order_id: orderData.order_id,
             order_name: orderData.order_name,
             price: orderData.price,  // 서버에서 계산한 금액 사용
-            redirect_url: window.location.origin + '/src/widget/widget_result.html',
+            redirect_url: window.location.origin + '/npm/widget/widget_result.html',
             user: {
                 id: 'demo_user_' + Date.now(),
                 username: '홍길동',

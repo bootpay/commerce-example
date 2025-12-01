@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제링크 발송 완료</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .back-link {
+            color: #f59e0b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Result Container */
+        .result-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        /* Success Icon */
+        .result-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 48px;
+        }
+        .result-icon.success {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .result-icon.error {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+        }
+        .result-icon.paid {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+
+        .result-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        .result-message {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .result-message strong {
+            color: #1e293b;
+        }
+
+        /* Delivery Info */
+        .delivery-info {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .delivery-info-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .delivery-info-title::before {
+            content: '📨';
+        }
+        .delivery-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+        .delivery-icon {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .delivery-detail {
+            flex: 1;
+        }
+        .delivery-label {
+            font-size: 0.8rem;
+            color: #92400e;
+        }
+        .delivery-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #78350f;
+        }
+
+        /* Order Details */
+        .order-details {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .order-details h3 {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .badge-sent {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-paid {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .detail-value {
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: right;
+            word-break: break-all;
+        }
+        .detail-value.mono {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .info-box-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-box-title::before {
+            content: 'ℹ️';
+        }
+        .info-box p {
+            font-size: 0.85rem;
+            color: #1e40af;
+            line-height: 1.5;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        /* Raw Data Section */
+        .raw-data-section {
+            margin-top: 24px;
+            text-align: left;
+        }
+        .raw-data-toggle {
+            background: none;
+            border: none;
+            color: #f59e0b;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .raw-data-toggle:hover {
+            text-decoration: underline;
+        }
+        .raw-data-content {
+            display: none;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .raw-data-content.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">
+            <span class="logo-icon">🔗</span>
+            결제링크 발송
+        </a>
+        <a href="/" class="back-link">← 예제 목록으로</a>
+    </header>
+
+    <div class="result-container">
+        <div class="result-card" id="resultCard">
+            <!-- Loading State -->
+            <div class="loading" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">결과를 확인하고 있습니다...</p>
+            </div>
+
+            <!-- Result Content -->
+            <div id="resultContent" style="display: none;">
+                <div class="result-icon" id="resultIcon">
+                    <span id="resultIconEmoji"></span>
+                </div>
+                <h1 class="result-title" id="resultTitle"></h1>
+                <p class="result-message" id="resultMessage"></p>
+
+                <!-- 발송 정보 (발송 완료 시) -->
+                <div class="delivery-info" id="deliveryInfo" style="display: none;">
+                    <div class="delivery-info-title">발송 정보</div>
+                    <div id="deliveryItems"></div>
+                </div>
+
+                <!-- 주문 정보 -->
+                <div class="order-details">
+                    <h3>
+                        주문 정보
+                        <span class="badge" id="statusBadge">발송됨</span>
+                    </h3>
+                    <div id="detailRows"></div>
+                </div>
+
+                <!-- 안내 정보 -->
+                <div class="info-box" id="infoBox">
+                    <div class="info-box-title">안내</div>
+                    <p id="infoText">고객이 결제를 완료하면 웹훅으로 결제 완료 알림을 받을 수 있습니다.</p>
+                </div>
+
+                <div class="btn-group">
+                    <a href="/npm/payment-link/payment-link.html" class="btn btn-secondary">새 결제링크 발송</a>
+                    <a href="/" class="btn btn-primary">홈으로 이동</a>
+                </div>
+
+                <div class="raw-data-section">
+                    <button class="raw-data-toggle" onclick="toggleRawData()">
+                        <span id="rawDataToggleIcon">▶</span> 원본 데이터 보기
+                    </button>
+                    <pre class="raw-data-content" id="rawDataContent"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL 파라미터 파싱
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const result = {};
+            for (const [key, value] of params) {
+                result[key] = decodeURIComponent(value);
+            }
+            return result;
+        }
+
+        // 현재 환경 가져오기
+        function getCurrentEnv() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('env') || localStorage.getItem('bootpay_env') || 'production';
+        }
+
+        // 서버에서 주문 정보 조회
+        async function getOrderInfo(orderNumber) {
+            try {
+                const env = getCurrentEnv();
+                const response = await fetch('/api/order/' + orderNumber + '?env=' + env);
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Order lookup error:', error);
+                return { success: false, message: error.message };
+            }
+        }
+
+        // 날짜 포맷팅
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        // 결과 표시
+        function showResult(params, serverData = null) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('resultContent').style.display = 'block';
+
+            const icon = document.getElementById('resultIcon');
+            const iconEmoji = document.getElementById('resultIconEmoji');
+            const title = document.getElementById('resultTitle');
+            const message = document.getElementById('resultMessage');
+            const statusBadge = document.getElementById('statusBadge');
+            const deliveryInfo = document.getElementById('deliveryInfo');
+            const infoBox = document.getElementById('infoBox');
+            const infoText = document.getElementById('infoText');
+
+            const status = params.status || 'sent';
+            const notificationMethod = params.notification_method || 'email';
+
+            // 상태별 표시
+            if (status === 'sent') {
+                icon.className = 'result-icon success';
+                iconEmoji.textContent = '✉️';
+                title.textContent = '결제링크가 발송되었습니다';
+
+                let methodText = '';
+                if (notificationMethod === 'email') {
+                    methodText = '이메일로';
+                } else if (notificationMethod === 'sms') {
+                    methodText = 'SMS로';
+                } else {
+                    methodText = '이메일과 SMS로';
+                }
+
+                message.innerHTML = `<strong>${params.customer_name || '고객'}</strong>님에게 ${methodText} 결제링크가 발송되었습니다.`;
+                statusBadge.className = 'badge badge-sent';
+                statusBadge.textContent = '발송됨';
+
+                // 발송 정보 표시
+                deliveryInfo.style.display = 'block';
+                showDeliveryInfo(params);
+
+                infoText.textContent = '고객이 결제를 완료하면 웹훅으로 결제 완료 알림을 받을 수 있습니다.';
+
+            } else if (status === 'paid' || status === 'success' || status === 'done') {
+                icon.className = 'result-icon paid';
+                iconEmoji.textContent = '✓';
+                title.textContent = '결제가 완료되었습니다';
+                message.innerHTML = `<strong>${params.customer_name || '고객'}</strong>님이 결제를 완료했습니다.`;
+                statusBadge.className = 'badge badge-paid';
+                statusBadge.textContent = '결제완료';
+                deliveryInfo.style.display = 'none';
+                infoText.textContent = '결제가 정상적으로 처리되었습니다.';
+
+            } else if (status === 'cancelled' || status === 'cancel') {
+                icon.className = 'result-icon error';
+                iconEmoji.textContent = '✕';
+                title.textContent = '결제가 취소되었습니다';
+                message.textContent = '고객이 결제를 취소했거나 결제에 실패했습니다.';
+                statusBadge.className = 'badge badge-cancelled';
+                statusBadge.textContent = '취소됨';
+                deliveryInfo.style.display = 'none';
+                infoText.textContent = '새로운 결제링크를 발송하여 다시 시도할 수 있습니다.';
+
+            } else {
+                icon.className = 'result-icon error';
+                iconEmoji.textContent = '!';
+                title.textContent = '오류가 발생했습니다';
+                message.textContent = params.message || '결제링크 발송 중 문제가 발생했습니다.';
+                statusBadge.className = 'badge badge-cancelled';
+                statusBadge.textContent = '오류';
+                deliveryInfo.style.display = 'none';
+                infoText.textContent = '다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.';
+            }
+
+            // 주문 정보 표시
+            showOrderDetails(params, serverData);
+
+            // 원본 데이터 저장
+            const rawData = {
+                url_params: params,
+                server_response: serverData
+            };
+            document.getElementById('rawDataContent').textContent = JSON.stringify(rawData, null, 2);
+        }
+
+        // 발송 정보 표시
+        function showDeliveryInfo(params) {
+            const container = document.getElementById('deliveryItems');
+            let html = '';
+
+            if (params.customer_email && (params.notification_method === 'email' || params.notification_method === 'both')) {
+                html += `
+                    <div class="delivery-item">
+                        <div class="delivery-icon">📧</div>
+                        <div class="delivery-detail">
+                            <div class="delivery-label">이메일</div>
+                            <div class="delivery-value">${params.customer_email}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (params.customer_phone && (params.notification_method === 'sms' || params.notification_method === 'both')) {
+                html += `
+                    <div class="delivery-item">
+                        <div class="delivery-icon">📱</div>
+                        <div class="delivery-detail">
+                            <div class="delivery-label">SMS</div>
+                            <div class="delivery-value">${formatPhone(params.customer_phone)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 전화번호 포맷팅
+        function formatPhone(phone) {
+            if (!phone) return '-';
+            const cleaned = phone.replace(/\D/g, '');
+            if (cleaned.length === 11) {
+                return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+            }
+            return phone;
+        }
+
+        // 주문 정보 표시
+        function showOrderDetails(params, serverData) {
+            const container = document.getElementById('detailRows');
+            const displayData = serverData || params;
+
+            const details = [
+                { label: '주문번호', value: params.order_number || params.order_id || '-', mono: true },
+                { label: '상품명', value: params.product_name || displayData.name || '-' },
+                { label: '결제금액', value: params.price ? `₩${Number(params.price).toLocaleString()}` : '-' },
+                { label: '고객명', value: params.customer_name || '-' }
+            ];
+
+            // 발송 방법
+            const methodNames = {
+                email: '이메일',
+                sms: 'SMS',
+                both: '이메일 + SMS'
+            };
+            details.push({ label: '발송방법', value: methodNames[params.notification_method] || '-' });
+
+            // 생성 시간
+            if (displayData.created_at) {
+                details.push({ label: '발송시간', value: formatDate(displayData.created_at) });
+            }
+
+            // 결제 완료 시간 (결제된 경우)
+            if (displayData.purchased_at) {
+                details.push({ label: '결제시간', value: formatDate(displayData.purchased_at) });
+            }
+
+            container.innerHTML = details.map(d => `
+                <div class="detail-row">
+                    <span class="detail-label">${d.label}</span>
+                    <span class="detail-value${d.mono ? ' mono' : ''}">${escapeHtml(d.value)}</span>
+                </div>
+            `).join('');
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text;
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toggleRawData() {
+            const content = document.getElementById('rawDataContent');
+            const icon = document.getElementById('rawDataToggleIcon');
+            content.classList.toggle('show');
+            icon.textContent = content.classList.contains('show') ? '▼' : '▶';
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', async function() {
+            const params = getUrlParams();
+            const orderNumber = params.order_number || params.order_id;
+
+            console.log('=== Payment Link Result Debug ===');
+            console.log('URL Parameters:', params);
+            console.log('Order Number:', orderNumber);
+
+            if (orderNumber) {
+                try {
+                    console.log('Fetching order info for:', orderNumber);
+                    const result = await getOrderInfo(orderNumber);
+                    console.log('Order Info Result:', result);
+
+                    if (result.success && result.data) {
+                        showResult(params, result.data);
+                    } else {
+                        showResult(params);
+                    }
+                } catch (error) {
+                    console.error('Order lookup error:', error);
+                    showResult(params);
+                }
+            } else {
+                setTimeout(() => {
+                    showResult(params);
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

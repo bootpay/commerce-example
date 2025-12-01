@@ -92,8 +92,9 @@ const PLAN_INFO = {
 // 현재 결제 주기 상태 (월간/연간)
 let isYearlyBilling = false
 
-// 현재 환경
-let currentEnv = 'production'
+// 현재 환경 (localhost면 development, 아니면 production)
+const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+let currentEnv = isLocalDev ? 'development' : 'production'
 
 // 현재 환경의 설정 가져오기
 function getCurrentConfig() {
@@ -109,9 +110,12 @@ function getProductId(planKey, isYearly) {
 
 // DOM이 로드된 후 초기화
 document.addEventListener('DOMContentLoaded', function () {
-    // 저장된 환경 불러오기 (기본값: production)
-    const savedEnv = localStorage.getItem('bootpay_env') || 'production'
-    currentEnv = savedEnv
+    // localhost면 development 강제, 아니면 저장된 환경 사용
+    if (isLocalDev) {
+        currentEnv = 'development'
+    } else {
+        currentEnv = localStorage.getItem('bootpay_env') || 'production'
+    }
 
     // 환경 선택 UI 초기화
     const envSelect = document.getElementById('env')
@@ -258,11 +262,11 @@ async function selectPlan(planKey) {
         console.log('플랜 주문 생성 완료:', orderData)
 
         // ========================================
-        // STEP 2: Bootpay Commerce 청구서 요청
+        // STEP 2: Bootpay Commerce 주문서 요청
         // ========================================
         BootpayCommerce.setLogLevel(1)
 
-        const response = await BootpayCommerce.requestInvoice({
+        const response = await BootpayCommerce.requestCheckout({
             client_key: config.client_key,
             name: `CloudSync Pro ${plan.name} 플랜`,
             memo: `${billingType} 구독 결제`,
@@ -270,16 +274,17 @@ async function selectPlan(planKey) {
                 membership_type: 'guest',
                 user_id: 'demo_user_1234',
                 name: '데모 사용자',
-                phone: '01012345678',
+                phone: '01040334678',
                 email: 'demo@example.com'
             },
             price: orderData.price,
-            redirect_url: window.location.origin + '/src/plan/plan_result.html',
+            redirect_url: window.location.origin + '/npm/plan/plan_result.html',
             usage_api_url: currentEnv === 'production'
                 ? 'https://api.bootapi.com/v1/billing/usage'
                 : 'https://dev-api.bootapi.com/v1/billing/usage',
             use_auto_login: true,
             request_id: orderData.order_id,
+            use_notification: true,
             products: [
                 {
                     product_id: productId,
@@ -300,7 +305,7 @@ async function selectPlan(planKey) {
             }
         })
 
-        console.log('Invoice Response:', response)
+        console.log('Checkout Response:', response)
 
         // ========================================
         // STEP 3: 결제 완료 후 서버 검증
@@ -328,7 +333,7 @@ async function selectPlan(planKey) {
         alert(`${plan.name} 플랜 구독 요청이 완료되었습니다!\n\n콘솔에서 상세 응답을 확인하세요.`)
 
     } catch (error) {
-        console.error('Invoice Error:', error)
+        console.error('Checkout Error:', error)
         alert('구독 요청 중 오류가 발생했습니다:\n' + error.message)
     }
 }

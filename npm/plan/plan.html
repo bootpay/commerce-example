@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudSync Pro - 요금제 선택</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: #1e293b;
+        }
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 64px 20px 48px;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .hero p {
+            color: #64748b;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Billing Toggle */
+        .billing-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 32px;
+        }
+        .billing-toggle span {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .billing-toggle span.active {
+            color: #1e293b;
+            font-weight: 600;
+        }
+        .toggle-switch {
+            width: 56px;
+            height: 28px;
+            background: #e2e8f0;
+            border-radius: 14px;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: #667eea;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .toggle-switch.active::after {
+            transform: translateX(28px);
+        }
+        .save-badge {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Pricing Cards */
+        .pricing-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        @media (max-width: 900px) {
+            .pricing-cards {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+        }
+        .pricing-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .pricing-card:hover {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+        }
+        .pricing-card.popular {
+            border-color: #667eea;
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2);
+        }
+        .pricing-card.selected {
+            border-color: #667eea;
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.25);
+            transform: translateY(-4px);
+        }
+        .pricing-card.selected .select-plan-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .plan-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .plan-starter .plan-icon { background: #e0f2fe; }
+        .plan-pro .plan-icon { background: #ede9fe; }
+        .plan-enterprise .plan-icon { background: #fef3c7; }
+
+        .plan-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .plan-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .plan-price {
+            margin-bottom: 24px;
+        }
+        .price-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .price-currency {
+            font-size: 1.25rem;
+            color: #64748b;
+            vertical-align: top;
+        }
+        .price-period {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-left: 8px;
+            display: none;
+        }
+        .original-price.show {
+            display: inline;
+        }
+        .discount-badge {
+            display: none;
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .discount-badge.show {
+            display: inline-block;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        .plan-features li::before {
+            content: '✓';
+            color: #22c55e;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .select-plan-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .plan-starter .select-plan-btn,
+        .plan-enterprise .select-plan-btn {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .plan-starter .select-plan-btn:hover,
+        .plan-enterprise .select-plan-btn:hover {
+            background: #e2e8f0;
+        }
+        .plan-pro .select-plan-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .plan-pro .select-plan-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid white;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .settings-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .settings-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .settings-content {
+            display: none;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        .settings-row {
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .settings-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        .settings-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .env-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .env-badge.development {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .env-badge.stage {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .env-badge.production {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">
+            <span class="logo-icon">☁️</span>
+            CloudSync Pro
+        </a>
+        <nav class="nav-links">
+            <a href="#">기능</a>
+            <a href="#">요금제</a>
+            <a href="#">문서</a>
+            <a href="#">지원</a>
+        </nav>
+        <a href="/" class="back-link">← 예제 목록으로</a>
+    </header>
+
+    <section class="hero">
+        <h1>나에게 맞는 요금제를 선택하세요</h1>
+        <p>모든 요금제에서 14일 무료 체험을 제공합니다. 언제든지 업그레이드하거나 다운그레이드할 수 있습니다.</p>
+
+        <div class="billing-toggle">
+            <span class="monthly-label active">월간 결제</span>
+            <div class="toggle-switch" id="billingToggle" onclick="toggleBilling()"></div>
+            <span class="yearly-label">연간 결제</span>
+            <span class="save-badge">20% 할인</span>
+        </div>
+    </section>
+
+    <section class="pricing-section">
+        <div class="pricing-cards">
+            <!-- Starter Plan -->
+            <div class="pricing-card plan-starter" data-plan="starter" onclick="focusPlan('starter')">
+                <div class="plan-icon">🚀</div>
+                <div class="plan-name">Starter</div>
+                <p class="plan-desc">개인 사용자 및 소규모 프로젝트에 적합한 기본 요금제</p>
+                <div class="plan-price">
+                    <span class="price-currency">₩</span>
+                    <span class="price-value" data-monthly="9,900" data-yearly="7,900">9,900</span>
+                    <span class="price-period">/월</span>
+                    <span class="original-price" data-monthly="₩9,900">₩9,900</span>
+                    <span class="discount-badge">-20%</span>
+                </div>
+                <ul class="plan-features">
+                    <li>5GB 클라우드 스토리지</li>
+                    <li>최대 3개 프로젝트</li>
+                    <li>기본 분석 대시보드</li>
+                    <li>이메일 지원</li>
+                    <li>SSL 보안 인증서</li>
+                </ul>
+                <button class="select-plan-btn" onclick="event.stopPropagation(); selectPlan('starter')">Starter 시작하기</button>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="pricing-card plan-pro" data-plan="pro" onclick="focusPlan('pro')">
+                <span class="popular-badge">가장 인기</span>
+                <div class="plan-icon">⚡</div>
+                <div class="plan-name">Professional</div>
+                <p class="plan-desc">성장하는 팀과 비즈니스를 위한 완벽한 솔루션</p>
+                <div class="plan-price">
+                    <span class="price-currency">₩</span>
+                    <span class="price-value" data-monthly="29,900" data-yearly="23,900">29,900</span>
+                    <span class="price-period">/월</span>
+                    <span class="original-price" data-monthly="₩29,900">₩29,900</span>
+                    <span class="discount-badge">-20%</span>
+                </div>
+                <ul class="plan-features">
+                    <li>100GB 클라우드 스토리지</li>
+                    <li>무제한 프로젝트</li>
+                    <li>고급 분석 및 리포트</li>
+                    <li>우선 기술 지원</li>
+                    <li>팀 협업 도구</li>
+                    <li>API 접근 권한</li>
+                    <li>커스텀 도메인 연결</li>
+                </ul>
+                <button class="select-plan-btn" onclick="event.stopPropagation(); selectPlan('pro')">Professional 시작하기</button>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="pricing-card plan-enterprise" data-plan="enterprise" onclick="focusPlan('enterprise')">
+                <div class="plan-icon">🏢</div>
+                <div class="plan-name">Enterprise</div>
+                <p class="plan-desc">대규모 조직을 위한 맞춤형 엔터프라이즈 솔루션</p>
+                <div class="plan-price">
+                    <span class="price-currency">₩</span>
+                    <span class="price-value" data-monthly="99,000" data-yearly="79,000">99,000</span>
+                    <span class="price-period">/월</span>
+                    <span class="original-price" data-monthly="₩99,000">₩99,000</span>
+                    <span class="discount-badge">-20%</span>
+                </div>
+                <ul class="plan-features">
+                    <li>무제한 클라우드 스토리지</li>
+                    <li>무제한 프로젝트</li>
+                    <li>전용 계정 매니저</li>
+                    <li>24/7 전화 지원</li>
+                    <li>SSO 및 SAML 인증</li>
+                    <li>SLA 99.9% 보장</li>
+                    <li>맞춤형 온보딩</li>
+                    <li>감사 로그</li>
+                </ul>
+                <button class="select-plan-btn" onclick="event.stopPropagation(); selectPlan('enterprise')">영업팀 문의</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+        <div class="settings-header" onclick="toggleSettings()">
+            <span class="settings-title">환경 설정</span>
+            <span class="settings-toggle">▲</span>
+        </div>
+        <div class="settings-content">
+            <div class="settings-row">
+                <label class="settings-label">실행 환경</label>
+                <select class="settings-select" id="env" onchange="changeEnv()">
+                    <option value="development">Development (테스트)</option>
+                    <option value="stage">Stage</option>
+                    <option value="production" selected>Production (실서비스)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script type="module" src="/npm/plan/plan.js"></script>
+</body>
+</html>

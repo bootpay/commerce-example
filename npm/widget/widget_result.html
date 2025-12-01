@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CloudSync Pro - 결제 결과</title>
+    <title>TechMall - 결제 결과</title>
     <style>
         * {
             margin: 0;
@@ -39,7 +39,7 @@
         .logo-icon {
             width: 36px;
             height: 36px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -48,7 +48,7 @@
             font-size: 18px;
         }
         .back-link {
-            color: #667eea;
+            color: #11998e;
             text-decoration: none;
             font-size: 0.9rem;
             display: flex;
@@ -77,7 +77,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
 
-        /* Success State */
+        /* Result Icon */
         .result-icon {
             width: 80px;
             height: 80px;
@@ -129,7 +129,7 @@
             align-items: center;
             gap: 8px;
         }
-        .order-details h3 .badge {
+        .badge {
             font-size: 0.7rem;
             padding: 2px 8px;
             border-radius: 4px;
@@ -139,14 +139,6 @@
         .badge-success {
             background: #dcfce7;
             color: #166534;
-        }
-        .badge-warning {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .badge-error {
-            background: #fee2e2;
-            color: #991b1b;
         }
         .badge-sandbox {
             background: #e0e7ff;
@@ -173,7 +165,7 @@
             word-break: break-all;
         }
         .detail-value a {
-            color: #667eea;
+            color: #11998e;
             text-decoration: none;
         }
         .detail-value a:hover {
@@ -182,6 +174,9 @@
         .detail-value.mono {
             font-family: 'SF Mono', Monaco, monospace;
             font-size: 0.8rem;
+        }
+        .detail-value.highlight {
+            color: #dc2626;
         }
 
         /* Payment Method Details */
@@ -251,7 +246,7 @@
             border: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
         }
         .btn-primary:hover {
@@ -277,7 +272,7 @@
             width: 48px;
             height: 48px;
             border: 4px solid #e2e8f0;
-            border-top-color: #667eea;
+            border-top-color: #11998e;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -297,7 +292,7 @@
         .raw-data-toggle {
             background: none;
             border: none;
-            color: #667eea;
+            color: #11998e;
             font-size: 0.85rem;
             cursor: pointer;
             display: flex;
@@ -328,8 +323,8 @@
 <body>
     <header class="header">
         <a href="/" class="logo">
-            <span class="logo-icon">☁️</span>
-            CloudSync Pro
+            <span class="logo-icon">🛍️</span>
+            TechMall
         </a>
         <a href="/" class="back-link">← 예제 목록으로</a>
     </header>
@@ -339,7 +334,7 @@
             <!-- Loading State -->
             <div class="loading" id="loadingState">
                 <div class="loading-spinner"></div>
-                <p class="loading-text">결제 결과를 확인하고 있습니다...</p>
+                <p class="loading-text">결제 결과를 조회하고 있습니다...</p>
             </div>
 
             <!-- Result Content (hidden initially) -->
@@ -358,14 +353,14 @@
                     <div id="detailRows"></div>
                 </div>
 
-                <!-- 결제 수단 상세 (카드/계좌/휴대폰 등) -->
+                <!-- 결제 수단 상세 -->
                 <div class="payment-method-section" id="paymentMethodSection" style="display: none;">
                     <h3>결제 수단 상세</h3>
                     <div id="paymentMethodContent"></div>
                 </div>
 
                 <div class="btn-group">
-                    <a href="/src/plan/plan.html" class="btn btn-secondary">요금제 페이지로</a>
+                    <a href="/npm/widget/widget.html" class="btn btn-secondary">쇼핑 계속하기</a>
                     <a href="/" class="btn btn-primary">홈으로 이동</a>
                 </div>
 
@@ -393,18 +388,23 @@
         // 현재 환경 가져오기 (localStorage 또는 URL 파라미터)
         function getCurrentEnv() {
             const params = new URLSearchParams(window.location.search);
-            return params.get('env') || localStorage.getItem('bootpay_env') || 'production';
+            return params.get('env') || localStorage.getItem('bootpay_widget_env') || 'production';
         }
 
-        // 서버에서 주문 정보 조회
-        async function getOrderInfo(orderNumber) {
+        // 결제 조회 API 호출
+        async function getPaymentInfo(receiptId) {
             try {
                 const env = getCurrentEnv();
-                const response = await fetch('/api/order/' + orderNumber + '?env=' + env);
+                const response = await fetch('/api/payment/receipt/' + receiptId + '?env=' + env, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const result = await response.json();
                 return result;
             } catch (error) {
-                console.error('Order lookup error:', error);
+                console.error('Payment lookup error:', error);
                 return { success: false, message: error.message };
             }
         }
@@ -430,85 +430,70 @@
         // 카드번호 마스킹
         function maskCardNumber(cardNo) {
             if (!cardNo) return '-';
-            // 이미 마스킹된 경우 그대로 반환
             if (cardNo.includes('*')) return cardNo;
-            // 앞 4자리, 뒤 4자리만 표시
             if (cardNo.length >= 8) {
                 return cardNo.slice(0, 4) + '-****-****-' + cardNo.slice(-4);
             }
             return cardNo;
         }
 
-        // 카드 할부 표시
+        // 할부 표시
         function getQuotaText(quota) {
-            if (!quota || quota === '00' || quota === '0') return '일시불';
+            if (!quota || quota === '00' || quota === '0' || quota === 0) return '일시불';
             return `${parseInt(quota)}개월`;
         }
 
-        // Commerce 응답에서 빌링/카드 데이터 추출
-        function extractBillingData(serverData) {
-            // Commerce API 응답 구조에서 billing_key_data 추출
-            if (serverData?.order_subscriptions?.[0]?.first_order_subscription_bill?.billing_key_data) {
-                return serverData.order_subscriptions[0].first_order_subscription_bill.billing_key_data;
-            }
-            // 일반 결제 API 응답 구조
-            if (serverData?.card_data) {
-                return serverData.card_data;
-            }
-            return null;
-        }
-
         // 결제 수단 상세 정보 표시
-        function showPaymentMethodDetails(serverData) {
+        function showPaymentMethodDetails(data) {
             const section = document.getElementById('paymentMethodSection');
             const content = document.getElementById('paymentMethodContent');
 
-            if (!serverData) {
+            if (!data) {
                 section.style.display = 'none';
                 return;
             }
 
             let html = '';
 
-            // Commerce API 또는 일반 결제 API에서 카드 데이터 추출
-            const billingData = extractBillingData(serverData);
-
-            // 카드 결제 (Commerce 또는 일반)
-            if (billingData && (billingData.type === 'card' || billingData.card_company)) {
+            // 카드 결제
+            if (data.card_data || data.method_symbol === 'card') {
+                const card = data.card_data || {};
                 html = `
                     <div class="card-info">
                         <div class="card-icon">CARD</div>
                         <div class="card-details">
-                            <div class="card-company">${billingData.card_company || '-'}</div>
-                            <div class="card-number">${maskCardNumber(billingData.card_no)}</div>
+                            <div class="card-company">${card.card_company || data.method || '-'}</div>
+                            <div class="card-number">${card.card_no || '-'}</div>
                         </div>
                     </div>
+                    ${card.tid ? `
                     <div class="detail-row">
-                        <span class="detail-label">승인번호</span>
-                        <span class="detail-value mono">${billingData.card_approve_no || '-'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">할부</span>
-                        <span class="detail-value">${getQuotaText(billingData.card_quota)}</span>
-                    </div>
-                    ${billingData.card_type ? `
-                    <div class="detail-row">
-                        <span class="detail-label">카드 종류</span>
-                        <span class="detail-value">${billingData.card_type}</span>
+                        <span class="detail-label">거래번호 (TID)</span>
+                        <span class="detail-value mono">${card.tid}</span>
                     </div>
                     ` : ''}
-                    ${billingData.receipt_url ? `
+                    <div class="detail-row">
+                        <span class="detail-label">할부</span>
+                        <span class="detail-value">${getQuotaText(card.card_quota)}</span>
+                    </div>
+                    ${card.card_type ? `
+                    <div class="detail-row">
+                        <span class="detail-label">카드 종류</span>
+                        <span class="detail-value">${card.card_type}</span>
+                    </div>
+                    ` : ''}
+                    ${data.receipt_url ? `
                     <div class="detail-row">
                         <span class="detail-label">매출전표</span>
-                        <span class="detail-value"><a href="${billingData.receipt_url}" target="_blank">확인하기</a></span>
+                        <span class="detail-value"><a href="${data.receipt_url}" target="_blank">확인하기</a></span>
                     </div>
                     ` : ''}
                 `;
             }
 
             // 가상계좌
-            if (serverData.vbank_data && serverData.method_symbol === 'vbank') {
-                const vbank = serverData.vbank_data;
+            if (data.vbank_data && data.method_symbol === 'vbank') {
+                const vbank = data.vbank_data;
                 html = `
                     <div class="card-info">
                         <div class="card-icon">BANK</div>
@@ -522,10 +507,6 @@
                         <span class="detail-value">${vbank.bank_username || '-'}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">입금자명</span>
-                        <span class="detail-value">${vbank.sender_name || '-'}</span>
-                    </div>
-                    <div class="detail-row">
                         <span class="detail-label">입금기한</span>
                         <span class="detail-value">${formatDate(vbank.expired_at)}</span>
                     </div>
@@ -533,8 +514,8 @@
             }
 
             // 계좌이체
-            if (serverData.bank_data && serverData.method_symbol === 'bank') {
-                const bank = serverData.bank_data;
+            if (data.bank_data && data.method_symbol === 'bank') {
+                const bank = data.bank_data;
                 html = `
                     <div class="card-info">
                         <div class="card-icon">BANK</div>
@@ -543,18 +524,12 @@
                             <div class="card-number">계좌이체</div>
                         </div>
                     </div>
-                    ${bank.cash_receipt_no ? `
-                    <div class="detail-row">
-                        <span class="detail-label">현금영수증 번호</span>
-                        <span class="detail-value mono">${bank.cash_receipt_no}</span>
-                    </div>
-                    ` : ''}
                 `;
             }
 
             // 휴대폰 결제
-            if (serverData.phone_data && serverData.method_symbol === 'phone') {
-                const phone = serverData.phone_data;
+            if (data.phone_data && data.method_symbol === 'phone') {
+                const phone = data.phone_data;
                 html = `
                     <div class="card-info">
                         <div class="card-icon">PHONE</div>
@@ -562,10 +537,6 @@
                             <div class="card-company">휴대폰 결제</div>
                             <div class="card-number">${phone.phone || '-'}</div>
                         </div>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">승인번호</span>
-                        <span class="detail-value mono">${phone.auth_no || '-'}</span>
                     </div>
                 `;
             }
@@ -579,7 +550,7 @@
         }
 
         // 결과 표시
-        function showResult(status, data, serverData = null) {
+        function showResult(urlParams, serverData = null) {
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('resultContent').style.display = 'block';
 
@@ -588,167 +559,83 @@
             const title = document.getElementById('resultTitle');
             const message = document.getElementById('resultMessage');
 
-            // 서버 검증 결과 반영
-            const errorMessage = data.message || '';
+            // URL 파라미터의 status 또는 서버 데이터의 status
+            const urlStatus = urlParams.status || urlParams.event;
+            const serverStatus = serverData?.status;
 
-            // Commerce API 또는 일반 결제 API 상태 확인
-            const paymentStatus = serverData?.status;
-            const receiptStatus = serverData?.receipt_status;
+            // 결제 상태 판단
+            // status: 0=대기, 1=완료, 2=승인대기, 3=취소, 4=오류, 5=환불, 20=가상계좌대기
+            const isSuccess = serverStatus === 1 || urlStatus === '1' || urlStatus === 'done';
+            const isCancelled = serverStatus === 3 || serverStatus === 5 || serverStatus === 20;
+            const isVbankPending = serverStatus === 20 && !serverData?.cancelled_price;
+            const isPending = serverStatus === 0 || serverStatus === 2;
 
-            // Commerce API 성공 상태들
-            const commerceSuccessStatuses = [
-                'subscription_request_completed',
-                'order_completed',
-                'payment_completed'
-            ];
-            const commerceReceiptSuccess = [
-                'receipt_billing_key_published',
-                'receipt_paid'
-            ];
-
-            // 일반 결제 API 성공 (status === 1)
-            const isRegularPaymentSuccess = paymentStatus === 1;
-            // Commerce API 성공
-            const isCommerceSuccess = commerceSuccessStatuses.includes(paymentStatus) ||
-                                      commerceReceiptSuccess.includes(receiptStatus);
-            // URL 파라미터 성공
-            const isUrlSuccess = status === 'success' || status === 'done';
-
-            const isPaymentSuccess = isRegularPaymentSuccess || isCommerceSuccess || isUrlSuccess;
-            const isPaymentCancelled = paymentStatus === 3 || paymentStatus === 5 ||
-                                       paymentStatus === 'cancelled' || status === 'cancel';
-
-            if (isPaymentSuccess && !isPaymentCancelled) {
+            if (isSuccess) {
                 icon.className = 'result-icon success';
                 iconEmoji.textContent = '✓';
                 title.textContent = '결제가 완료되었습니다';
-                message.textContent = '구독이 성공적으로 시작되었습니다. 이제 CloudSync Pro의 모든 기능을 사용하실 수 있습니다.';
-            } else if (isPaymentCancelled) {
+                message.textContent = '주문이 성공적으로 완료되었습니다. 감사합니다!';
+            } else if (isCancelled && serverData?.cancelled_price > 0) {
                 icon.className = 'result-icon pending';
                 iconEmoji.textContent = '!';
                 title.textContent = '결제가 취소되었습니다';
-                message.textContent = '결제가 취소되었습니다. 언제든지 다시 시도하실 수 있습니다.';
-            } else if (paymentStatus === 20 || receiptStatus === 'receipt_vbank_ready') {
-                // 가상계좌 입금 대기
+                message.textContent = serverData?.status_locale || '결제가 취소되었습니다.';
+            } else if (isVbankPending) {
                 icon.className = 'result-icon pending';
                 iconEmoji.textContent = '!';
                 title.textContent = '입금 대기 중입니다';
                 message.textContent = '가상계좌로 입금해 주시면 결제가 완료됩니다.';
+            } else if (isPending) {
+                icon.className = 'result-icon pending';
+                iconEmoji.textContent = '!';
+                title.textContent = '결제 처리 중입니다';
+                message.textContent = '결제가 처리 중입니다. 잠시만 기다려주세요.';
             } else {
                 icon.className = 'result-icon error';
                 iconEmoji.textContent = '✕';
                 title.textContent = '결제에 실패했습니다';
-                message.textContent = errorMessage || '결제 처리 중 문제가 발생했습니다. 다시 시도해 주세요.';
+                message.textContent = urlParams.message || serverData?.message || '결제 처리 중 문제가 발생했습니다.';
             }
 
-            // 샌드박스/개발 환경 뱃지 표시
-            if (serverData?.sandbox || serverData?.sdk) {
+            // 샌드박스 뱃지
+            if (serverData?.sandbox) {
                 document.getElementById('sandboxBadge').style.display = 'inline';
             }
 
-            // 서버에서 받은 데이터 우선 사용
-            const displayData = serverData || data;
+            // 데이터 소스 (서버 우선)
+            const data = serverData || urlParams;
 
-            // 주문 정보 표시
+            // 주문 정보 표시 - 응답값에 있는 필드만 표시
             const detailRows = document.getElementById('detailRows');
+            const details = [];
 
-            // Commerce API 응답에서 빌링 데이터 추출
-            const billingData = extractBillingData(serverData);
-            const firstBill = serverData?.order_subscriptions?.[0]?.first_order_subscription_bill;
-            const subscription = serverData?.order_subscriptions?.[0];
-
-            // URL 파라미터에서도 값 추출 (Commerce SDK용)
-            const orderId = displayData.order_number || displayData.order_id || data.order_number || data.order_id || '-';
-            const receiptId = displayData.receipt_id || data.receipt_id || data.receiptId || '-';
-            const orderName = displayData.order_name || displayData.name || data.order_name || data.name || data.item_name || '-';
-            const price = displayData.price || data.price || data.amount;
-
-            // 결제수단 추출 (Commerce API 또는 일반 API)
-            let method = displayData.method || data.method || data.pay_method;
-            if (billingData?.type) {
-                const methodMap = { 'card': '카드', 'bank': '계좌이체', 'vbank': '가상계좌', 'phone': '휴대폰' };
-                method = methodMap[billingData.type] || billingData.type;
-            }
-            if (billingData?.card_company) {
-                method = billingData.card_company;
-            }
-            const pg = displayData.pg || data.pg;
-
-            const details = [
-                { label: '주문번호', value: orderId, mono: true },
-            ];
-
-            // 영수증 ID가 있을 때만 표시 (일반 결제용)
-            if (receiptId && receiptId !== '-') {
-                details.push({ label: '영수증 ID', value: receiptId, mono: true });
-            }
-
-            // 고객명 (Commerce API)
-            if (displayData.username || displayData.user?.name) {
-                details.push({ label: '고객명', value: displayData.username || displayData.user?.name });
-            }
-
-            details.push(
-                { label: '상품명', value: orderName },
-                { label: '결제금액', value: price ? `₩${Number(price).toLocaleString()}` : '-' }
-            );
-
-            // 취소금액이 있으면 표시
-            if (displayData.cancelled_price && displayData.cancelled_price > 0) {
-                details.push({ label: '취소금액', value: `₩${Number(displayData.cancelled_price).toLocaleString()}` });
-            }
-
-            // 결제일시
-            const purchasedAt = displayData.purchased_at || displayData.created_at || data.purchased_at || data.paid_at;
-            details.push(
-                { label: '결제일시', value: purchasedAt ? formatDate(purchasedAt) : '-' }
-            );
-
-            // 결제수단
-            if (method || pg) {
-                const methodText = method || '-';
-                const pgText = pg ? ` (${pg})` : '';
-                details.push({ label: '결제수단', value: methodText + pgText });
-            }
-
-            // Commerce 구독 정보
-            if (subscription) {
-                details.push({ label: '구독 상태', value: getSubscriptionStatusText(subscription.status) });
-                if (subscription.payment_next_at) {
-                    details.push({ label: '다음 결제일', value: formatDate(subscription.payment_next_at) });
-                }
-            }
-
-            // 일반 결제 상태
-            if (!subscription) {
-                details.push(
-                    { label: '결제상태', value: displayData.status_locale || getStatusText(status, displayData.status) }
-                );
-            }
-
-            // 영수증 URL이 있으면 추가
-            if (displayData.receipt_url) {
-                details.push({ label: '영수증', value: `<a href="${displayData.receipt_url}" target="_blank">확인하기</a>`, isHtml: true });
-            }
-
-            // 에러 코드가 있으면 추가
-            if (data.error_code) {
-                details.push({ label: '에러 코드', value: data.error_code, mono: true });
-            }
+            if (data.order_id) details.push({ label: '주문번호', value: data.order_id, mono: true });
+            if (data.receipt_id) details.push({ label: '영수증 ID', value: data.receipt_id, mono: true });
+            if (data.company_name) details.push({ label: '가맹점명', value: data.company_name });
+            if (data.order_name) details.push({ label: '상품명', value: data.order_name });
+            if (data.price !== undefined) details.push({ label: '결제금액', value: `₩${Number(data.price).toLocaleString()}` });
+            if (data.cancelled_price > 0) details.push({ label: '취소금액', value: `₩${Number(data.cancelled_price).toLocaleString()}`, highlight: true });
+            if (data.method) details.push({ label: '결제수단', value: data.method });
+            if (data.pg) details.push({ label: 'PG사', value: data.pg });
+            if (data.requested_at) details.push({ label: '결제요청일시', value: formatDate(data.requested_at) });
+            if (data.purchased_at) details.push({ label: '결제완료일시', value: formatDate(data.purchased_at) });
+            if (data.cancelled_at) details.push({ label: '취소일시', value: formatDate(data.cancelled_at) });
+            if (data.status_locale) details.push({ label: '결제상태', value: data.status_locale });
+            if (data.receipt_url) details.push({ label: '영수증', value: `<a href="${data.receipt_url}" target="_blank">확인하기</a>`, isHtml: true });
 
             detailRows.innerHTML = details.map(d => `
                 <div class="detail-row">
                     <span class="detail-label">${d.label}</span>
-                    <span class="detail-value${d.mono ? ' mono' : ''}">${d.isHtml ? d.value : escapeHtml(d.value)}</span>
+                    <span class="detail-value${d.mono ? ' mono' : ''}${d.highlight ? ' highlight' : ''}">${d.isHtml ? d.value : escapeHtml(d.value)}</span>
                 </div>
             `).join('');
 
-            // 결제 수단 상세 정보 표시
+            // 결제 수단 상세
             showPaymentMethodDetails(serverData);
 
-            // 원본 데이터 저장 (URL 파라미터 + 서버 응답)
+            // 원본 데이터
             const rawData = {
-                url_params: data,
+                url_params: urlParams,
                 server_response: serverData
             };
             document.getElementById('rawDataContent').textContent = JSON.stringify(rawData, null, 2);
@@ -762,54 +649,21 @@
             return div.innerHTML;
         }
 
-        function getStatusText(eventStatus, paymentStatus) {
-            // 서버에서 받은 결제 상태 (숫자)
-            if (typeof paymentStatus === 'number') {
-                const paymentStatusMap = {
-                    0: '결제 대기',
-                    1: '결제 완료',
-                    2: '결제 승인 대기',
-                    3: '결제 취소',
-                    4: '결제 오류',
-                    5: '환불 완료',
-                    20: '가상계좌 입금 대기'
-                };
-                return paymentStatusMap[paymentStatus] || `상태 ${paymentStatus}`;
-            }
-
-            // Commerce API 상태 (문자열)
-            if (typeof paymentStatus === 'string') {
-                const commerceStatusMap = {
-                    'subscription_request_completed': '구독 요청 완료',
-                    'order_completed': '주문 완료',
-                    'payment_completed': '결제 완료',
-                    'cancelled': '취소됨',
-                    'refunded': '환불 완료'
-                };
-                return commerceStatusMap[paymentStatus] || paymentStatus;
-            }
-
-            // URL 파라미터의 이벤트 상태
-            const eventStatusMap = {
-                'success': '결제 완료',
+        // 상태 텍스트
+        function getStatusText(status) {
+            const statusMap = {
+                0: '결제 대기',
+                1: '결제 완료',
+                2: '결제 승인 대기',
+                3: '결제 취소',
+                4: '결제 오류',
+                5: '환불 완료',
+                20: '가상계좌 입금 대기',
                 'done': '결제 완료',
                 'cancel': '취소됨',
-                'error': '실패',
-                'pending': '처리중'
+                'error': '실패'
             };
-            return eventStatusMap[eventStatus] || eventStatus;
-        }
-
-        function getSubscriptionStatusText(status) {
-            const statusMap = {
-                'subscribing': '구독 중',
-                'paused': '일시정지',
-                'cancelled': '구독 취소',
-                'expired': '만료됨',
-                'pending': '대기 중',
-                'trial': '무료 체험 중'
-            };
-            return statusMap[status] || status;
+            return statusMap[status] || `상태: ${status}`;
         }
 
         function toggleRawData() {
@@ -822,33 +676,34 @@
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', async function() {
             const params = getUrlParams();
-            const status = params.event || params.status || 'success';
-            const orderNumber = params.order_number || params.orderNumber || params.order_id;
+            const receiptId = params.receipt_id;
 
-            console.log('=== Plan Result Debug ===');
+            console.log('=== Widget Payment Result ===');
             console.log('URL Parameters:', params);
-            console.log('Status:', status);
-            console.log('Order Number:', orderNumber);
+            console.log('Receipt ID:', receiptId);
 
-            if (orderNumber) {
+            if (receiptId) {
                 try {
-                    console.log('Fetching order info for:', orderNumber);
-                    const result = await getOrderInfo(orderNumber);
-                    console.log('Order Info Result:', result);
+                    console.log('Fetching payment info for receipt_id:', receiptId);
+                    const result = await getPaymentInfo(receiptId);
+                    console.log('Payment Info Result:', result);
 
                     if (result.success && result.data) {
-                        showResult(status, params, result.data);
+                        showResult(params, result.data);
                     } else {
-                        showResult(status, params);
+                        // API 실패 시 URL 파라미터로 표시
+                        console.warn('Payment lookup failed:', result.message);
+                        showResult(params);
                     }
                 } catch (error) {
-                    console.error('Order lookup error:', error);
-                    showResult(status, params);
+                    console.error('Error fetching payment info:', error);
+                    showResult(params);
                 }
             } else {
-                console.warn('No order_number found in URL params');
+                // receipt_id가 없으면 URL 파라미터만 사용
+                console.warn('No receipt_id in URL');
                 setTimeout(() => {
-                    showResult(status, params);
+                    showResult(params);
                 }, 500);
             }
         });

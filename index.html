@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootpay Commerce SDK Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 900px;
+        }
+        h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.1rem;
+            margin-bottom: 60px;
+        }
+        .demo-cards {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        .demo-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+        .demo-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            margin: 0 auto 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .demo-icon.npm {
+            background: linear-gradient(135deg, #cb3837 0%, #a02724 100%);
+        }
+        .demo-icon.cdn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .demo-card h2 {
+            font-size: 1.75rem;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .demo-card .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .demo-card.npm .tag {
+            background: #fce4e4;
+            color: #cb3837;
+        }
+        .demo-card.cdn .tag {
+            background: #e8e4fc;
+            color: #667eea;
+        }
+        .demo-card p {
+            color: #6b7280;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+        .demo-card code {
+            display: block;
+            background: #f3f4f6;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.85rem;
+            color: #374151;
+            margin-bottom: 28px;
+            text-align: left;
+            overflow-x: auto;
+        }
+        .demo-btn {
+            display: inline-block;
+            padding: 14px 36px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            color: white;
+        }
+        .demo-card.npm .demo-btn {
+            background: linear-gradient(135deg, #cb3837 0%, #a02724 100%);
+        }
+        .demo-card.cdn .demo-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .demo-card:hover .demo-btn {
+            transform: scale(1.05);
+        }
+        .feature-list {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+        .feature-list li {
+            color: #6b7280;
+            font-size: 0.9rem;
+            padding: 6px 0;
+            list-style: none;
+        }
+        .feature-list li::before {
+            content: '✓';
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .footer {
+            margin-top: 60px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+        }
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bootpay Commerce SDK</h1>
+        <p class="subtitle">결제 연동 방식을 선택하세요</p>
+
+        <div class="demo-cards">
+            <a href="/npm/index.html" class="demo-card npm">
+                <div class="demo-icon npm">📦</div>
+                <span class="tag">ES6 Module</span>
+                <h2>NPM 방식</h2>
+                <p>모던 JavaScript 프로젝트에 적합한 NPM 패키지 방식입니다. 번들러와 함께 사용합니다.</p>
+                <code>npm install @bootpay/bp-commerce-sdk</code>
+                <ul class="feature-list">
+                    <li>Tree-shaking 지원</li>
+                    <li>TypeScript 타입 정의</li>
+                    <li>번들 최적화</li>
+                </ul>
+                <span class="demo-btn">NPM 예제 보기</span>
+            </a>
+
+            <a href="/cdn/index.html" class="demo-card cdn">
+                <div class="demo-icon cdn">🌐</div>
+                <span class="tag">Script Tag</span>
+                <h2>CDN 방식</h2>
+                <p>빠르게 시작할 수 있는 CDN 스크립트 방식입니다. 별도의 빌드 과정이 필요 없습니다.</p>
+                <code>&lt;script src="https://js.bootpay.co.kr/..."&gt;</code>
+                <ul class="feature-list">
+                    <li>즉시 사용 가능</li>
+                    <li>빌드 도구 불필요</li>
+                    <li>간편한 테스트</li>
+                </ul>
+                <span class="demo-btn">CDN 예제 보기</span>
+            </a>
+        </div>
+
+        <p class="footer">
+            <a href="https://docs.bootpay.co.kr" target="_blank">부트페이 문서</a> ·
+            <a href="https://github.com/bootpay" target="_blank">GitHub</a>
+        </p>
+    </div>
+</body>
+</html>
