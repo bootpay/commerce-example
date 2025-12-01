@@ -4,7 +4,7 @@
   "description": "Bootpay Commerce SDK Example with npm",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite --port 5173\" \"wrangler pages dev . --port 8788 --proxy 5173\"",
+    "dev": "concurrently \"vite --port 5173\" \"wrangler pages dev --port 8788 --proxy 5173\"",
     "server": "node server.js",
     "build": "vite build",
     "preview": "vite preview"
