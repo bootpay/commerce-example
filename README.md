@@ -96,7 +96,7 @@ BootpayCommerce.setEnvironmentMode('development')
 ### CDN 방식
 ```html
 <!-- 결제 위젯용 (BootpayWidget) -->
-<script src="https://cdn.jsdelivr.net/npm/@bootpay/client-js@5.2.0/dist/index.umd.js"></script>
+<script src="https://js.bootpay.co.kr/bootpay-widget-5.2.0.min.js"></script>
 <script>
   // window.BootpayWidget 전역 객체로 사용
   BootpayWidget.setEnvironmentMode('development')
@@ -116,7 +116,7 @@ BootpayCommerce.setEnvironmentMode('development')
 
 | SDK | CDN URL | 전역 객체 |
 |-----|---------|-----------|
-| Client SDK (결제 위젯) | `https://cdn.jsdelivr.net/npm/@bootpay/client-js@5.2.0/dist/index.umd.js` | `BootpayWidget` |
+| Client SDK (결제 위젯) | `https://js.bootpay.co.kr/bootpay-widget-5.2.0.min.js` | `BootpayWidget` |
 | Commerce SDK (구독/청구서) | `https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js` | `BootpayCommerce` |
 
 ## 사용된 NPM 패키지
