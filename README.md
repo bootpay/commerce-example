@@ -108,7 +108,7 @@ BootpayCommerce.setEnvironmentMode('development')
 <script>
   // window.BootpayCommerce 전역 객체로 사용
   BootpayCommerce.setEnvironmentMode('development')
-  BootpayCommerce.requestInvoice({ ... })
+  BootpayCommerce.requestCheckout({ ... })
 </script>
 ```
 

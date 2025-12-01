@@ -785,7 +785,7 @@
                 // ========================================
                 BootpayCommerce.setLogLevel(1)
 
-                const response = await BootpayCommerce.requestInvoice({
+                const response = await BootpayCommerce.requestCheckout({
                     client_key: config.client_key,
                     name: `CloudSync Pro ${plan.name} 플랜`,
                     memo: `${billingType} 구독 결제`,
