@@ -6,7 +6,7 @@
 
 부트페이 대시보드에서 API 키를 발급받는 방법입니다.
 
-https://github.com/bootpay/commerce-example/raw/main/키발급.mp4
+[![키 발급 방법](https://github.com/bootpay/commerce-example/raw/main/키발급.gif)](https://github.com/bootpay/commerce-example/raw/main/키발급.mp4)
 
 > 💡 [부트페이 대시보드](https://dashboard.bootpay.co.kr)에서 회원가입 후 프로젝트를 생성하면 API 키를 발급받을 수 있습니다.
 
