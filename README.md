@@ -140,11 +140,11 @@ BootpayCommerce.setEnvironmentMode('development')
 ### Cloudflare Pages 배포
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name=mdshare-web --commit-dirty=true
+npx wrangler pages deploy dist --project-name=paypg --commit-dirty=true
 ```
 
 ### 배포 URL
-- **Production**: https://mdshare.io
+- **Production**: https://paypg.kr
 
 ## 환경 설정
 

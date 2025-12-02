@@ -14,6 +14,8 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f8fafc;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Header */
@@ -417,6 +419,73 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Bootpay Footer Styles */
+        .bootpay-footer {
+            background: #2d3748;
+            padding: 40px 0;
+            width: 100%;
+            margin-top: auto;
+        }
+        .bootpay-footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .bootpay-footer-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        .bootpay-footer-logo {
+            flex: 0 0 auto;
+        }
+        .bootpay-footer-logo img {
+            height: 24px;
+            opacity: 0.8;
+        }
+        .bootpay-footer-info {
+            flex: 1;
+            min-width: 280px;
+        }
+        .bootpay-footer-address {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .bootpay-footer-contact {
+            min-width: 150px;
+        }
+        .bootpay-footer-contact-title,
+        .bootpay-footer-links-title {
+            color: #e2e8f0;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .bootpay-footer-contact-text,
+        .bootpay-footer-links-text {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .bootpay-footer-links {
+            min-width: 150px;
+        }
+        .bootpay-footer-links-text a {
+            color: #a0aec0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .bootpay-footer-links-text a:hover {
+            color: #e2e8f0;
+        }
+        @media (max-width: 768px) {
+            .bootpay-footer-row {
+                flex-direction: column;
+                gap: 24px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -584,5 +653,37 @@
     </div>
 
     <script type="module" src="/npm/payment-link/payment-link.js"></script>
+
+    <!-- Bootpay Footer -->
+    <footer class="bootpay-footer">
+        <div class="bootpay-footer-container">
+            <div class="bootpay-footer-row">
+                <div class="bootpay-footer-logo">
+                    <img src="https://www.bootpay.co.kr/assets/logo/bootpay_gray" alt="부트페이">
+                </div>
+                <div class="bootpay-footer-info">
+                    <p class="bootpay-footer-address">
+                        (주)부트페이 | 대표 정재훈<br>
+                        사업자 등록번호 618-87-00495 | 통신판매업신고번호 2022-서울구로-1854<br>
+                        서울특별시 구로구 디지털로26길 61, 1202호 | pg@bootpay.co.kr
+                    </p>
+                </div>
+                <div class="bootpay-footer-contact">
+                    <div class="bootpay-footer-contact-title">CONTACT</div>
+                    <p class="bootpay-footer-contact-text">
+                        TEL. 1599-4062<br>
+                        FAX. 02-6008-9760
+                    </p>
+                </div>
+                <div class="bootpay-footer-links">
+                    <div class="bootpay-footer-links-title">LINKS</div>
+                    <p class="bootpay-footer-links-text">
+                        <a href="https://admin.bootpay.co.kr" target="_blank">부트페이 관리자 이동</a><br>
+                        <a href="https://docs.bootpay.co.kr" target="_blank">부트페이 개발문서 이동</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

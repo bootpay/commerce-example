@@ -210,8 +210,8 @@ export async function onRequestPost(context) {
         console.log('[Payment Link] Access Token 발급 완료')
 
         // 2. Invoice 생성 파라미터
-        // 서버에서 extra 파라미터가 없으면 빈 Hash로 처리하는데, to_unsafe_h 호출 시 에러가 발생
-        // 빈 객체라도 extra를 명시적으로 보내야 함
+        // 주의: extra, metadata 등을 빈 객체 {}로 보내면 Bootpay API에서 to_unsafe_h 에러 발생
+        // 필요없는 파라미터는 아예 보내지 않는 것이 좋음
         const invoiceParams = {
             name: product_name,
             title: product_name,
@@ -220,8 +220,7 @@ export async function onRequestPost(context) {
             request_id: orderId,
             redirect_url: redirect_url,
             use_redirect: true,
-            send_types: getSendTypes(notification_method),
-            extra: {}
+            send_types: getSendTypes(notification_method)
         }
 
         // product_id가 있으면 추가
