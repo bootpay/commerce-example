@@ -89,17 +89,14 @@ bootpay-commerce-example/
 // ES6 모듈 import
 import { BootpayCommerce } from '@bootpay/bp-commerce-sdk'
 import Bootpay, { BootpayWidget } from '@bootpay/client-js'
-
-BootpayCommerce.setEnvironmentMode('development')
 ```
 
 ### CDN 방식
 ```html
 <!-- 결제 위젯용 (BootpayWidget) -->
-<script src="https://js.bootpay.co.kr/bootpay-widget-5.2.0.min.js"></script>
+<script src="https://js.bootpay.co.kr/bootpay-widget-5.2.4.min.js"></script>
 <script>
   // window.BootpayWidget 전역 객체로 사용
-  BootpayWidget.setEnvironmentMode('development')
   BootpayWidget.render('#widget-area', { ... })
 </script>
 
@@ -107,7 +104,6 @@ BootpayCommerce.setEnvironmentMode('development')
 <script src="https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js"></script>
 <script>
   // window.BootpayCommerce 전역 객체로 사용
-  BootpayCommerce.setEnvironmentMode('development')
   BootpayCommerce.requestCheckout({ ... })
 </script>
 ```
@@ -116,7 +112,7 @@ BootpayCommerce.setEnvironmentMode('development')
 
 | SDK | CDN URL | 전역 객체 |
 |-----|---------|-----------|
-| Client SDK (결제 위젯) | `https://js.bootpay.co.kr/bootpay-widget-5.2.0.min.js` | `BootpayWidget` |
+| Client SDK (결제 위젯) | `https://js.bootpay.co.kr/bootpay-widget-5.2.4.min.js` | `BootpayWidget` |
 | Commerce SDK (구독/청구서) | `https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js` | `BootpayCommerce` |
 
 ## 사용된 NPM 패키지
@@ -134,17 +130,6 @@ BootpayCommerce.setEnvironmentMode('development')
 - **Wrangler** (포트 8788): Cloudflare Functions API 프록시
 
 > **중요**: 반드시 **http://localhost:8788** 로 접속해야 API가 작동합니다.
-
-## 배포
-
-### Cloudflare Pages 배포
-```bash
-npm run build
-npx wrangler pages deploy dist --project-name=paypg --commit-dirty=true
-```
-
-### 배포 URL
-- **Production**: https://paypg.kr
 
 ## 환경 설정
 

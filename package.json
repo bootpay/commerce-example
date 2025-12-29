@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@bootpay/bp-commerce-sdk": "^1.0.2",
-    "@bootpay/client-js": "^5.2.0",
+    "@bootpay/client-js": "^5.2.4",
     "@bootpay/backend-js": "2.4.1",
     "express": "^4.21.0",
     "cors": "^2.8.5"
