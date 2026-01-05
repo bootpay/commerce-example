@@ -597,60 +597,35 @@
 
     <!-- CDN 방식으로 SDK 로드 -->
     <script src="https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js"></script>
+    <!-- 환경 설정 로드 (config.example.js를 복사하여 config.js 생성 후 사용) -->
+    <script src="../config.js"></script>
     <script>
         // ========================================
-        // 환경별 설정 (development, stage, production)
+        // 환경별 설정 (외부 config.js에서 로드)
         // ========================================
-        const ENV_CONFIG = {
+        const ENV_CONFIG = window.BOOTPAY_CONFIG?.plan || {
             development: {
-                client_key: 'hxS-Up--5RvT6oU6QJE0JA',
+                client_key: 'YOUR_DEV_CLIENT_KEY',
                 plans: {
-                    starter: {
-                        monthly_product_id: '69268625d8df8fa1837cf661',
-                        yearly_product_id: '692686c4d8df8fa1837cf666'
-                    },
-                    pro: {
-                        monthly_product_id: '692686e5d8df8fa1837cf66b',
-                        yearly_product_id: '69268721d8df8fa1837cf670'
-                    },
-                    enterprise: {
-                        monthly_product_id: '69268783d8df8fa1837cf675',
-                        yearly_product_id: '692687a2d8df8fa1837cf67a'
-                    }
+                    starter: { monthly_product_id: '', yearly_product_id: '' },
+                    pro: { monthly_product_id: '', yearly_product_id: '' },
+                    enterprise: { monthly_product_id: '', yearly_product_id: '' }
                 }
             },
             stage: {
-                client_key: 'sEN72kYZBiyMNytA8nUGxQ',
+                client_key: 'YOUR_STAGE_CLIENT_KEY',
                 plans: {
-                    starter: {
-                        monthly_product_id: '6927d893ff30795ff003d374',
-                        yearly_product_id: '6927d8c310561eabadddcfae'
-                    },
-                    pro: {
-                        monthly_product_id: '6927d8f9ff30795ff003d379',
-                        yearly_product_id: '6927d9167f65277ba9ddcf71'
-                    },
-                    enterprise: {
-                        monthly_product_id: '6927d8f9ff30795ff003d379',
-                        yearly_product_id: '6927d9167f65277ba9ddcf71'
-                    }
+                    starter: { monthly_product_id: '', yearly_product_id: '' },
+                    pro: { monthly_product_id: '', yearly_product_id: '' },
+                    enterprise: { monthly_product_id: '', yearly_product_id: '' }
                 }
             },
             production: {
-                client_key: 'sEN72kYZBiyMNytA8nUGxQ',
+                client_key: 'YOUR_PROD_CLIENT_KEY',
                 plans: {
-                    starter: {
-                        monthly_product_id: '6927d893ff30795ff003d374',
-                        yearly_product_id: '6927d8c310561eabadddcfae'
-                    },
-                    pro: {
-                        monthly_product_id: '6927d8f9ff30795ff003d379',
-                        yearly_product_id: '6927d9167f65277ba9ddcf71'
-                    },
-                    enterprise: {
-                        monthly_product_id: '6927d8f9ff30795ff003d379',
-                        yearly_product_id: '6927d9167f65277ba9ddcf71'
-                    }
+                    starter: { monthly_product_id: '', yearly_product_id: '' },
+                    pro: { monthly_product_id: '', yearly_product_id: '' },
+                    enterprise: { monthly_product_id: '', yearly_product_id: '' }
                 }
             }
         }

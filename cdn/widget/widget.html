@@ -680,23 +680,19 @@
 
     <!-- CDN 방식으로 SDK 로드 (Bootpay 공식 위젯 CDN) -->
     <script src="https://js.bootpay.co.kr/bootpay-widget-5.2.0.min.js"></script>
+    <!-- 환경 설정 로드 (config.example.js를 복사하여 config.js 생성 후 사용) -->
+    <script src="../config.js"></script>
     <script>
         // UMD 버전은 window.BootpayWidget을 자동으로 설정함
         // BootpayWidget은 전역 객체로 직접 사용 가능
 
         // ========================================
-        // 환경별 설정 (development, stage, production)
+        // 환경별 설정 (외부 config.js에서 로드)
         // ========================================
-        const ENV_CONFIG = {
-            development: {
-                application_id: '692682dfb2084136e29ac1d9'
-            },
-            stage: {
-                application_id: '6927d523472c3a791b6250cd'
-            },
-            production: {
-                application_id: '6927d523472c3a791b6250cd'
-            }
+        const ENV_CONFIG = window.BOOTPAY_CONFIG?.widget || {
+            development: { application_id: 'YOUR_DEV_APPLICATION_ID' },
+            stage: { application_id: 'YOUR_STAGE_APPLICATION_ID' },
+            production: { application_id: 'YOUR_PROD_APPLICATION_ID' }
         }
 
         // 현재 환경 (localhost면 development, 아니면 production)

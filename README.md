@@ -131,18 +131,58 @@ import Bootpay, { BootpayWidget } from '@bootpay/client-js'
 
 > **중요**: 반드시 **http://localhost:8788** 로 접속해야 API가 작동합니다.
 
-## 환경 설정
+## 부트페이 키 설정
+
+### CDN 예제 설정
+
+CDN 버전 예제를 사용하려면 `cdn/config.js` 파일에 부트페이 키를 설정해야 합니다.
+
+```bash
+# 1. config 템플릿 복사
+cp cdn/config.example.js cdn/config.js
+
+# 2. cdn/config.js 파일을 열어 부트페이 키 입력
+```
+
+`cdn/config.js` 파일에서 아래 값들을 본인의 키로 변경하세요:
+
+```javascript
+window.BOOTPAY_CONFIG = {
+    widget: {
+        development: {
+            application_id: 'YOUR_DEV_APPLICATION_ID'  // 부트페이 Application ID
+        },
+        // ...
+    },
+    plan: {
+        development: {
+            client_key: 'YOUR_DEV_CLIENT_KEY',  // 부트페이 Client Key
+            // ...
+        },
+        // ...
+    },
+    // ...
+}
+```
+
+> 키는 [부트페이 대시보드](https://admin.bootpay.co.kr) > 프로젝트 > 설정 > 앱정보에서 확인할 수 있습니다.
+
+### 환경 변수 (.env)
+
+NPM 버전이나 서버 측 설정은 `.env` 파일을 사용합니다.
+
+```bash
+# .env.example을 참고하여 .env 파일 생성
+cp .env.example .env.development
+```
+
+## 환경 전환
 
 각 예제 페이지 우측 하단에 **환경 설정** 패널이 있습니다:
 - **development**: 테스트 환경 (실제 결제 없음)
 - **stage**: 스테이지 환경
 - **production**: 실서비스 환경
-
-## 참고 자료
-
-- [부트페이 공식 문서](https://docs.bootpay.co.kr)
-- [부트페이 GitHub](https://github.com/bootpay)
-- [부트페이 대시보드](https://dashboard.bootpay.co.kr)
+ 
 
 ## 라이선스
 

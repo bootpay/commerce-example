@@ -654,30 +654,32 @@
 
     <!-- CDN 방식으로 SDK 로드 (필요시 사용) -->
     <script src="https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js"></script>
+    <!-- 환경 설정 로드 (config.example.js를 복사하여 config.js 생성 후 사용) -->
+    <script src="../config.js"></script>
     <script>
         // ========================================
-        // 환경별 설정 (development, stage, production)
+        // 환경별 설정 (외부 config.js에서 로드)
         // ========================================
-        const ENV_CONFIG = {
+        const ENV_CONFIG = window.BOOTPAY_CONFIG?.paymentLink || {
             development: {
                 products: {
-                    basic: { product_id: '69268625d8df8fa1837cf661' },
-                    pro: { product_id: '692686e5d8df8fa1837cf66b' },
-                    enterprise: { product_id: '69268783d8df8fa1837cf675' }
+                    basic: { product_id: '' },
+                    pro: { product_id: '' },
+                    enterprise: { product_id: '' }
                 }
             },
             stage: {
                 products: {
-                    basic: { product_id: '6927d893ff30795ff003d374' },
-                    pro: { product_id: '6927d8f9ff30795ff003d379' },
-                    enterprise: { product_id: '6927d8f9ff30795ff003d379' }
+                    basic: { product_id: '' },
+                    pro: { product_id: '' },
+                    enterprise: { product_id: '' }
                 }
             },
             production: {
                 products: {
-                    basic: { product_id: '6927d893ff30795ff003d374' },
-                    pro: { product_id: '6927d8f9ff30795ff003d379' },
-                    enterprise: { product_id: '6927d8f9ff30795ff003d379' }
+                    basic: { product_id: '' },
+                    pro: { product_id: '' },
+                    enterprise: { product_id: '' }
                 }
             }
         }

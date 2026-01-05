@@ -9,3 +9,6 @@ wrangler.toml
 # Build output
 dist/
 CLAUDE.md
+
+# CDN config with actual keys (use config.example.js as template)
+cdn/config.js
