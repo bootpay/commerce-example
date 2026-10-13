@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주문 결과 — 오브제 데모샵</title>
+    <title>주문 결과 — 오브제 스토어</title>
     <link rel="stylesheet" href="/shop/shop.css">
 </head>
 <body>
@@ -53,7 +53,7 @@
                         <a class="button button-dark" href="/shop/products/index.html#collection">계속 쇼핑하기 <span aria-hidden="true">${icon('arrow-up-right')}</span></a>
                     </div>`
             } catch (error) {
-                root.innerHTML = errorHtml(error.status === 404 ? '이 계정에서 만든 주문을 찾지 못했습니다. 서버가 재시작되면 데모 주문 기록이 초기화됩니다.' : error.message, 'retry') + '<a href="/shop/account/orders.html" class="text-link">주문 내역 보기</a>'
+                root.innerHTML = errorHtml(error.status === 404 ? '이 계정에서 만든 주문을 찾지 못했습니다. 주문 내역에서 다시 확인해 주세요.' : error.message, 'retry') + '<a href="/shop/account/orders.html" class="text-link">주문 내역 보기</a>'
                 document.getElementById('retry')?.addEventListener('click', load)
             }
         }

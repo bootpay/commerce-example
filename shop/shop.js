@@ -1,4 +1,4 @@
-// 쇼핑몰 데모 브라우저 공용 모듈 — 헤더/푸터, 장바구니 저장, 로그인 회원, 상품 일러스트.
+// 쇼핑몰 브라우저 공용 모듈 — 헤더/푸터, 장바구니 저장, 로그인 회원, 상품 일러스트.
 import { MAX_CART_LINES, MAX_QUANTITY, SHOP_STORE, findShopProduct } from './catalog.js'
 
 export const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || ''
@@ -166,8 +166,8 @@ export function renderShell(active = '') {
             <a class="skip-link" href="#main-content">본문으로 바로가기</a>
             <div class="announcement">3만원 이상 구매 시 무료배송 · 본인인증 회원 전용 스토어</div>
             <header class="site-header">
-                <a href="/shop/products/index.html" class="wordmark" aria-label="${escapeHtml(SHOP_STORE.name)} 홈"><span>objet<i>demo</i></span><small>${escapeHtml(SHOP_STORE.name)}</small></a>
-                <nav class="main-nav" aria-label="주 메뉴"><a href="/shop/products/index.html#collection"${current('products')}>모든 상품</a><a href="/">결제 예제</a></nav>
+                <a href="/shop/products/index.html" class="wordmark" aria-label="${escapeHtml(SHOP_STORE.name)} 홈"><span>objet<i>store</i></span><small>${escapeHtml(SHOP_STORE.name)}</small></a>
+                <nav class="main-nav" aria-label="주 메뉴"><a href="/shop/products/index.html#collection"${current('products')}>모든 상품</a><a href="/shop/products/index.html?category=flower#collection">플라워</a><a href="/shop/products/index.html?category=kitchen#collection">키친</a></nav>
                 <nav class="utility-nav" aria-label="내 쇼핑">
                     ${user ? `<a href="/shop/account/orders.html"${current('orders')}>주문 내역</a><button type="button" id="shop-logout" title="${escapeHtml(user.email || '')}">${escapeHtml(user.username || '회원')}님 · 로그아웃</button>` : `<a href="${loginPath()}"${current('login')}>로그인</a><a href="/auth/register.html"${current('register')}>회원가입</a>`}
                     <a href="/shop/cart/index.html" class="cart-link"${current('cart')}><svg width="19" height="21" viewBox="0 0 20 22" fill="none" aria-hidden="true"><path d="M3 7h14l1 13H2L3 7Z" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 8V5a3.5 3.5 0 0 1 7 0v3" stroke="currentColor" stroke-width="1.6"/></svg><span>장바구니</span><span id="cart-count-slot"></span></a>
@@ -192,10 +192,10 @@ export function renderShell(active = '') {
             <footer class="site-footer">
                 <div class="footer-top">
                     <div><p class="eyebrow">OBJECTS FOR EVERYDAY</p><p class="footer-statement">조금 더 좋아지는,<br>매일의 풍경.</p></div>
-                    <div class="footer-about"><p>${escapeHtml(SHOP_STORE.description)}</p><p style="margin-top:12px">이 쇼핑몰은 Bootpay 결제·본인인증 연동을 보여주는 데모입니다. 테스트 결제만 진행됩니다.</p></div>
-                    <div class="footer-contact"><p class="eyebrow">CONTACT</p><a href="tel:${escapeHtml(SHOP_STORE.phone)}">${escapeHtml(SHOP_STORE.phone)}</a><a href="mailto:${escapeHtml(SHOP_STORE.email)}">${escapeHtml(SHOP_STORE.email)}</a><a href="/shop/cart/index.html">장바구니</a><a href="/admin/payments/index.html">관리자</a></div>
+                    <div class="footer-about"><p>${escapeHtml(SHOP_STORE.description)}</p></div>
+                    <div class="footer-contact"><p class="eyebrow">CUSTOMER CENTER</p><a href="tel:${escapeHtml(SHOP_STORE.phone)}">${escapeHtml(SHOP_STORE.phone)}</a><a href="mailto:${escapeHtml(SHOP_STORE.email)}">${escapeHtml(SHOP_STORE.email)}</a><a href="/shop/cart/index.html">장바구니</a></div>
                 </div>
-                <div class="footer-bottom"><div><strong>${escapeHtml(SHOP_STORE.name)}</strong><span>판매자 ${escapeHtml(SHOP_STORE.sellerName)}</span><span>결제 Bootpay</span></div><p>© ${new Date().getFullYear()} ${escapeHtml(SHOP_STORE.name)}</p></div>
+                <div class="footer-bottom"><div><strong>${escapeHtml(SHOP_STORE.businessName)}</strong><span>대표자 ${escapeHtml(SHOP_STORE.ceo)}</span><span>사업자등록번호 ${escapeHtml(SHOP_STORE.registrationNumber)}</span><span>통신판매업신고 ${escapeHtml(SHOP_STORE.mailOrderNumber)}</span><span>${escapeHtml(SHOP_STORE.address)}</span><span>전화 ${escapeHtml(SHOP_STORE.phone)}</span><span>팩스 ${escapeHtml(SHOP_STORE.fax)}</span><span>이메일 ${escapeHtml(SHOP_STORE.email)}</span></div><p>© ${new Date().getFullYear()} ${escapeHtml(SHOP_STORE.name)}</p></div>
             </footer>`
     }
 }

@@ -3,11 +3,17 @@
 // DOM/Node API 를 쓰지 않는 순수 모듈로 유지한다.
 
 export const SHOP_STORE = {
-    name: '오브제 데모샵',
+    name: '오브제 스토어',
     description: '꽃 한 송이, 손에 익은 그릇, 제자리를 찾은 작은 물건. 일상을 채우는 취향을 모았습니다.',
-    sellerName: '부트페이 데모',
-    phone: '1544-7772',
-    email: 'help@bootpay.co.kr'
+    // 판매자 사업자 정보 (전자상거래법 표시 사항)
+    businessName: '(주)부트페이',
+    ceo: '윤태섭',
+    registrationNumber: '618-87-00495',
+    mailOrderNumber: '제 2022-서울구로-1854',
+    address: '[08389] 서울특별시 구로구 디지털로26길 61 에이스하이엔드타워2차 1202호',
+    phone: '1599-4062',
+    fax: '02-6008-9760',
+    email: 'pg@bootpay.co.kr'
 }
 
 export const SHOP_DELIVERY = {

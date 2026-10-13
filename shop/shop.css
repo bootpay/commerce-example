@@ -1,4 +1,4 @@
-/* 쇼핑몰 데모 공용 스타일 — storefront-next(오브제진 07) 디자인 계약을 정적 HTML 용으로 옮긴 것.
+/* 쇼핑몰 공용 스타일 — storefront-next(오브제진 07) 디자인 계약을 정적 HTML 용으로 옮긴 것.
    웜 페이퍼 캔버스, 차콜 글자, 절제된 올리브. 플랫 보더, 장식 그림자 없음. */
 
 :root { --canvas: #faf9f6; --ink: #292d26; --muted: #73766e; --line: #dddfd6; --olive: #565f42; --soft: #f0f0e9; --danger: #8d3a30; --serif: "Noto Serif KR", "Batang", Georgia, serif; --latin: "Helvetica Neue", Arial, sans-serif; }

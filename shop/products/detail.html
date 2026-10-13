@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>상품 상세 — 오브제 데모샵</title>
+    <title>상품 상세 — 오브제 스토어</title>
     <link rel="stylesheet" href="/shop/shop.css">
 </head>
 <body>
@@ -21,7 +21,7 @@
         if (!product) {
             root.innerHTML = `<div class="empty-state"><p class="eyebrow">NOT FOUND</p><h2>찾는 상품이 없어요.</h2><p>판매가 끝났거나 주소가 바뀌었을 수 있습니다.</p><a class="button button-dark" href="/shop/products/index.html#collection">모든 상품 보기</a></div>`
         } else {
-            document.title = `${product.name} — 오브제 데모샵`
+            document.title = `${product.name} — 오브제 스토어`
             const state = { optionId: '', quantity: 1, added: false, error: '' }
 
             const option = () => product.options.find(item => item.id === state.optionId) || null
