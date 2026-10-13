@@ -62,7 +62,7 @@ export async function verifyShopReceipt(hostname, env, order, receiptId) {
         headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + btoa(`${config.client_key}:${config.secret_key}`) }
     })
     const receipt = await response.json().catch(() => ({}))
-    if (!response.ok) return { ok: false, status: 502, message: receipt.message || '결제 정보를 조회하지 못했습니다.' }
+    if (!response.ok) return { ok: false, status: 424, message: receipt.message || '결제 정보를 조회하지 못했습니다.' }
     if (receipt.order_id && receipt.order_id !== order.order_id) return { ok: false, status: 409, message: '다른 주문의 영수증입니다.' }
     if (Number(receipt.status) !== 1) return { ok: false, status: 409, message: '결제가 완료되지 않았습니다.', orderStatus: 'pending' }
     if (Number(receipt.price) !== Number(order.total_price)) return { ok: false, status: 409, message: '결제 금액이 주문 금액과 일치하지 않습니다.', orderStatus: 'price_mismatch' }

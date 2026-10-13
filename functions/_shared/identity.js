@@ -55,7 +55,7 @@ export async function fetchCertificate(receiptId, config) {
     if (!response.ok) {
         const error = new Error(data.message || '본인인증 결과를 조회하지 못했습니다.')
         error.code = data.error_code || 'CERTIFICATE_LOOKUP_FAILED'
-        error.status = 502
+        error.status = 424 // 502 는 Cloudflare 가 자체 오류 페이지로 바꿔 사유가 사라진다
         throw error
     }
     return data
