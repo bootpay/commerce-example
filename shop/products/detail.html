@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 상세 — 오브제 데모샵</title>
+    <link rel="stylesheet" href="/shop/shop.css">
+</head>
+<body>
+    <div id="shop-header"></div>
+    <main id="main-content"><div id="detail" class="page-width"></div></main>
+    <div id="shop-footer"></div>
+    <script type="module">
+        import { SHOP_DELIVERY, categoryName, findShopProduct, isAvailable, requiresOption } from '../catalog.js'
+        import { addToCart, bindQuantity, currentUser, escapeHtml, icon, loginPath, money, productArt, quantityHtml, renderShell, setBuyNow } from '../shop.js'
+
+        renderShell('products')
+        const root = document.getElementById('detail')
+        const product = findShopProduct(new URLSearchParams(location.search).get('product_id'))
+
+        if (!product) {
+            root.innerHTML = `<div class="empty-state"><p class="eyebrow">NOT FOUND</p><h2>찾는 상품이 없어요.</h2><p>판매가 끝났거나 주소가 바뀌었을 수 있습니다.</p><a class="button button-dark" href="/shop/products/index.html#collection">모든 상품 보기</a></div>`
+        } else {
+            document.title = `${product.name} — 오브제 데모샵`
+            const state = { optionId: '', quantity: 1, added: false, error: '' }
+
+            const option = () => product.options.find(item => item.id === state.optionId) || null
+            const stockOf = () => option() ? option().stock : product.stock
+            const unitPrice = () => product.price + (option()?.price || 0)
+            const maxQuantity = () => stockOf() === null ? 99 : Math.max(1, Math.min(99, stockOf()))
+            const canPurchase = () => isAvailable(product) && (!requiresOption(product) || (option() && option().stock !== 0)) && (stockOf() === null || stockOf() >= state.quantity)
+            const purchaseLabel = () => !isAvailable(product) ? '품절된 상품입니다'
+                : requiresOption(product) && !option() ? '옵션을 선택해 주세요'
+                : option() && option().stock === 0 ? '품절된 옵션입니다'
+                : '장바구니에 담기'
+            const selection = () => ({ productId: product.id, ...(state.optionId ? { optionId: state.optionId } : {}), quantity: state.quantity })
+            const stockText = () => {
+                const stock = stockOf()
+                if (!isAvailable(product) || stock === 0) return '품절'
+                return stock !== null && stock <= 5 ? `구매 가능 · ${stock}개 남음` : '구매 가능'
+            }
+
+            root.innerHTML = `
+                <nav class="breadcrumbs" aria-label="현재 위치"><a href="/shop/products/index.html">홈</a><span aria-hidden="true">/</span><a href="/shop/products/index.html?category=${encodeURIComponent(product.categoryId)}#collection">${escapeHtml(categoryName(product.categoryId))}</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
+                <div class="product-detail-grid">
+                    <div class="product-main-photo">${productArt(product, { soldOut: !isAvailable(product) })}</div>
+                    <div class="product-info">
+                        <p class="eyebrow">${escapeHtml(categoryName(product.categoryId).toUpperCase() || 'THE EVERYDAY COLLECTION')}</p>
+                        <h1>${escapeHtml(product.name)}</h1>
+                        <p class="product-description">${escapeHtml(product.description)}</p>
+                        <div class="detail-price" id="detail-price"></div>
+                        <div class="delivery-note"><span>배송 안내</span><div><p>배송비 ${money(SHOP_DELIVERY.baseFee)}</p><small>${money(SHOP_DELIVERY.freeThreshold)} 이상 구매 시 무료배송</small><small>출고 예정: 주문 후 ${SHOP_DELIVERY.days}일</small></div></div>
+                        ${requiresOption(product) ? `<div class="option-field"><label for="product-option">옵션 선택 <span class="muted">필수</span></label><select id="product-option"><option value="">옵션을 선택해 주세요</option>${product.options.map(item => `<option value="${escapeHtml(item.id)}" ${item.stock === 0 ? 'disabled' : ''}>${escapeHtml(item.name)}${item.price > 0 ? ` (+${money(item.price)})` : ''}${item.stock === 0 ? ' — 품절' : item.stock !== null && item.stock <= 5 ? ` — ${item.stock}개 남음` : ''}</option>`).join('')}</select></div>` : ''}
+                        <div class="quantity-row"><span>수량</span><div id="quantity-slot"></div></div>
+                        <div class="product-total"><span>상품 금액</span><strong id="product-total"></strong></div>
+                        <div class="product-purchase-actions" id="purchase-actions">
+                            <button type="button" class="button button-outline button-full" id="add-cart"></button>
+                            <button type="button" class="button button-dark button-full" id="buy-now" aria-describedby="buy-now-help">바로 구매 <span aria-hidden="true">${icon('arrow-up-right')}</span></button>
+                        </div>
+                        <p id="buy-now-help" class="product-purchase-note"></p>
+                        <div id="cart-feedback"></div>
+                        <div class="product-accordions">
+                            <details open><summary>상품 안내 <span aria-hidden="true">${icon('plus')}</span></summary>
+                                <dl class="product-facts"><div><dt>카테고리</dt><dd>${escapeHtml(categoryName(product.categoryId))}</dd></div><div><dt>옵션</dt><dd>${requiresOption(product) ? `${product.options.length}가지 중 선택` : '단일 상품'}</dd></div><div><dt>판매 상태</dt><dd id="stock-text"></dd></div></dl>
+                                <ul>${product.detail.map(line => `<li>${escapeHtml(line)}</li>`).join('')}</ul>
+                            </details>
+                            <details><summary>배송 및 교환 안내 <span aria-hidden="true">${icon('plus')}</span></summary><p>결제 후 ${SHOP_DELIVERY.days}일 안에 출고합니다. 단순 변심 교환·반품은 수령 후 7일 이내에 가능하며 왕복 배송비가 부과됩니다.</p></details>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding-top:48px"><a href="/shop/products/index.html#collection" class="text-link"><span aria-hidden="true">${icon('arrow-left')}</span> 다른 물건도 둘러보기</a></div>
+                <div class="mobile-buy-bar" id="mobile-bar" hidden><div class="mobile-buy-price"><span id="mobile-label"></span><strong id="mobile-total"></strong></div><button type="button" class="button button-dark" id="mobile-buy">바로 구매</button></div>`
+
+            function paint() {
+                const price = unitPrice()
+                document.getElementById('detail-price').innerHTML = `<strong>${money(price)}</strong>${product.originalPrice > product.price ? `<del>${money(product.originalPrice + (option()?.price || 0))}</del>` : ''}`
+                document.getElementById('product-total').textContent = money(price * state.quantity)
+                document.getElementById('stock-text').textContent = stockText()
+                const slot = document.getElementById('quantity-slot')
+                slot.innerHTML = quantityHtml({ value: state.quantity, max: maxQuantity(), disabled: !isAvailable(product) })
+                bindQuantity(slot.firstElementChild, maxQuantity(), value => { state.quantity = value; state.added = false; paint() })
+
+                const ok = canPurchase()
+                const addButton = document.getElementById('add-cart')
+                addButton.disabled = !ok
+                addButton.innerHTML = `${purchaseLabel()} <span aria-hidden="true">${icon('plus')}</span>`
+                document.getElementById('buy-now').disabled = !ok
+                document.getElementById('buy-now-help').textContent = !ok ? purchaseLabel() : currentUser() ? '바로 구매하면 선택한 상품만 주문합니다. 장바구니는 그대로 유지돼요.' : '주문은 본인인증을 마친 회원만 할 수 있어요. 로그인 후 이어서 주문합니다.'
+                document.getElementById('cart-feedback').innerHTML = state.error
+                    ? `<div class="error-notice" role="alert">${escapeHtml(state.error)}</div>`
+                    : state.added ? `<div class="added-notice" role="status"><p>장바구니에 담았습니다.</p><a href="/shop/cart/index.html" class="text-link">장바구니 보기 <span aria-hidden="true">${icon('arrow-right')}</span></a></div>` : ''
+
+                const needsOption = requiresOption(product) && !option() && isAvailable(product)
+                document.getElementById('mobile-label').textContent = needsOption ? '옵션을 선택해 주세요' : `${option() ? `${option().name} · ` : ''}${state.quantity}개`
+                document.getElementById('mobile-total').textContent = money(price * state.quantity)
+                const mobileBuy = document.getElementById('mobile-buy')
+                mobileBuy.textContent = needsOption ? '옵션 선택' : '바로 구매'
+                mobileBuy.disabled = !needsOption && !ok
+            }
+
+            function buyNow() {
+                if (!canPurchase()) return
+                setBuyNow(selection())
+                const next = '/shop/orders/new.html?mode=buy-now'
+                location.href = currentUser() ? next : loginPath(next)
+            }
+
+            document.getElementById('product-option')?.addEventListener('change', event => {
+                state.optionId = event.target.value
+                state.quantity = 1
+                state.added = false
+                paint()
+            })
+            document.getElementById('add-cart').addEventListener('click', () => {
+                try {
+                    addToCart(selection())
+                    state.added = true
+                    state.error = ''
+                } catch (error) {
+                    state.error = error.message
+                }
+                paint()
+            })
+            document.getElementById('buy-now').addEventListener('click', buyNow)
+            document.getElementById('mobile-buy').addEventListener('click', () => {
+                if (requiresOption(product) && !option()) {
+                    const select = document.getElementById('product-option')
+                    select.scrollIntoView({ block: 'center' })
+                    select.focus()
+                    return
+                }
+                buyNow()
+            })
+            // 모바일 하단 구매 바는 본문의 구매 버튼이 화면 밖으로 나갔을 때만 보인다.
+            new IntersectionObserver(([entry]) => { document.getElementById('mobile-bar').hidden = entry.isIntersecting })
+                .observe(document.getElementById('purchase-actions'))
+            paint()
+        }
+    </script>
+</body>
+</html>

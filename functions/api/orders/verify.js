@@ -1,5 +1,8 @@
 // Cloudflare Pages Functions - /api/orders/verify
 
+import { getOrder, saveOrder } from '../../_shared/demo-store.js'
+import { verifyShopReceipt } from '../../_shared/shop-order.js'
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -16,21 +19,35 @@ export async function onRequestPost(context) {
         const body = await context.request.json()
         const { receipt_id, order_id } = body
 
-        // 실제 환경에서는:
-        // 1. KV/D1에서 주문 정보 조회
-        // 2. Bootpay API로 결제 정보 조회
-        // 3. 금액 비교 검증
+        const shopOrder = getOrder(order_id)
+        if (shopOrder?.order_id?.startsWith('SHOP_')) {
+            if (shopOrder.status === 'paid') return new Response(JSON.stringify({ success: true, order: shopOrder }), { headers: corsHeaders })
+            const result = await verifyShopReceipt(new URL(context.request.url).hostname, context.env, shopOrder, receipt_id)
+            if (!result.ok) {
+                if (result.orderStatus) saveOrder({ ...shopOrder, receipt_id, status: result.orderStatus })
+                return new Response(JSON.stringify({ success: false, message: result.message }), { status: result.status, headers: corsHeaders })
+            }
+            const order = saveOrder({ ...shopOrder, receipt_id, status: 'paid', paid_at: new Date().toISOString() })
+            return new Response(JSON.stringify({ success: true, message: '결제가 정상적으로 확인되었습니다.', order }), { headers: corsHeaders })
+        }
 
-        // 데모용 응답
+        const existingOrder = getOrder(order_id) || {
+            order_id,
+            total_price: null,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        }
+        const order = saveOrder({
+            ...existingOrder,
+            receipt_id,
+            status: 'paid',
+            paid_at: new Date().toISOString()
+        })
+
         return new Response(JSON.stringify({
             success: true,
             message: '결제가 정상적으로 확인되었습니다.',
-            order: {
-                order_id,
-                receipt_id,
-                status: 'paid',
-                paid_at: new Date().toISOString()
-            }
+            order
         }), { headers: corsHeaders })
 
     } catch (error) {

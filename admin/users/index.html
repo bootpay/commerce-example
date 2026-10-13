@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 회원 관리</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #172033; }
+        header { padding: 18px 28px; background: #111827; color: white; display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #c7d2fe; text-decoration: none; margin-left: 16px; font-weight: 700; }
+        main { max-width: 1180px; margin: 36px auto; padding: 0 20px; }
+        .panel { background: white; border-radius: 16px; padding: 26px; box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08); }
+        .toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        h1 { margin: 0; }
+        p { color: #64748b; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 13px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+        th { color: #475569; font-size: 13px; background: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+        .active { background: #dcfce7; color: #166534; }
+        .suspended { background: #fee2e2; color: #991b1b; }
+        .admin { background: #e0e7ff; color: #3730a3; }
+        button { padding: 8px 11px; border: 0; border-radius: 8px; background: #111827; color: white; font-weight: 800; cursor: pointer; }
+        button.secondary { background: #e2e8f0; color: #172033; }
+        .message { margin-bottom: 16px; padding: 12px; border-radius: 10px; display: none; }
+        .message.show { display: block; }
+        .message.ok { background: #dcfce7; color: #166534; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .empty { padding: 24px; text-align: center; color: #64748b; }
+    </style>
+</head>
+<body>
+    <header>
+        <strong>관리자</strong>
+        <nav>
+            <a href="/admin/users/index.html">회원</a>
+            <a href="/admin/payments/index.html">결제내역</a>
+            <a href="/auth/login.html">로그인</a>
+            <a href="/">메인</a>
+        </nav>
+    </header>
+    <main>
+        <div id="message" class="message"></div>
+        <section class="panel">
+            <div class="toolbar">
+                <div>
+                    <h1>회원 관리</h1>
+                    <p>메모리 저장소의 회원을 조회하고 활성/정지 상태를 변경합니다.</p>
+                </div>
+                <button class="secondary" id="refresh">새로고침</button>
+            </div>
+            <div id="content" class="empty">불러오는 중...</div>
+        </section>
+    </main>
+    <script>
+        const message = document.getElementById('message')
+        const content = document.getElementById('content')
+        const currentUser = JSON.parse(localStorage.getItem('bootpay_demo_user') || 'null')
+
+        function showMessage(text, type) {
+            message.textContent = text
+            message.className = `message show ${type}`
+        }
+        function requireAdmin() {
+            if (!currentUser || currentUser.role !== 'admin') {
+                content.innerHTML = '<p>관리자 로그인이 필요합니다. 데모 관리자 계정은 admin@demo.local / admin1234 입니다.</p><p><a href="/auth/login.html">로그인으로 이동</a></p>'
+                return false
+            }
+            return true
+        }
+        async function loadUsers() {
+            if (!requireAdmin()) return
+            const response = await fetch('/api/admin/users', { headers: { 'X-Demo-Admin-Id': currentUser.id } })
+            const data = await response.json()
+            if (!data.success) {
+                showMessage(data.message || '회원 목록을 불러오지 못했습니다.', 'error')
+                return
+            }
+            if (!data.users.length) {
+                content.innerHTML = '<div class="empty">회원이 없습니다.</div>'
+                return
+            }
+            content.innerHTML = `
+                <table>
+                    <thead><tr><th>회원</th><th>역할</th><th>본인인증</th><th>상태</th><th>가입일</th><th>관리</th></tr></thead>
+                    <tbody>${data.users.map(user => `
+                        <tr>
+                            <td><strong>${escapeHtml(user.username)}</strong><br>${escapeHtml(user.email)}<br><small>${escapeHtml(user.phone || '-')}</small></td>
+                            <td><span class="badge ${user.role === 'admin' ? 'admin' : ''}">${escapeHtml(user.role)}</span></td>
+                            <td>${user.identity_verified ? `<span class="badge active">인증 완료</span><br><small>${formatDate(user.identity_verified_at)}</small>` : '<span class="badge">미인증</span>'}</td>
+                            <td><span class="badge ${user.status}">${user.status === 'active' ? '활성' : '정지'}</span></td>
+                            <td>${formatDate(user.created_at)}</td>
+                            <td>${user.role === 'admin' ? '-' : `<button data-user-id="${user.id}" data-status="${user.status === 'active' ? 'suspended' : 'active'}">${user.status === 'active' ? '정지' : '활성화'}</button>`}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>`
+            content.querySelectorAll('button[data-user-id]').forEach(button => {
+                button.addEventListener('click', () => updateStatus(button.dataset.userId, button.dataset.status))
+            })
+        }
+        async function updateStatus(userId, status) {
+            const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-Demo-Admin-Id': currentUser.id },
+                body: JSON.stringify({ status })
+            })
+            const data = await response.json()
+            if (!data.success) {
+                showMessage(data.message || '상태 변경에 실패했습니다.', 'error')
+                return
+            }
+            showMessage('회원 상태를 변경했습니다.', 'ok')
+            await loadUsers()
+        }
+        function escapeHtml(value) {
+            const div = document.createElement('div')
+            div.textContent = value == null ? '' : String(value)
+            return div.innerHTML
+        }
+        function formatDate(value) {
+            return value ? new Date(value).toLocaleString('ko-KR') : '-'
+        }
+        document.getElementById('refresh').addEventListener('click', loadUsers)
+        loadUsers()
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 결과 — 오브제 데모샵</title>
+    <link rel="stylesheet" href="/shop/shop.css">
+</head>
+<body>
+    <div id="shop-header"></div>
+    <main id="main-content"><div class="page-width result-page" id="result-root"></div></main>
+    <div id="shop-footer"></div>
+    <script type="module">
+        import { api, currentUser, errorHtml, escapeHtml, icon, loadingHtml, money, renderShell, subtractFromCart } from '../shop.js'
+
+        renderShell()
+        const root = document.getElementById('result-root')
+        const orderId = new URLSearchParams(location.search).get('order_id') || ''
+        const user = currentUser()
+        const STATUS = { paid: '결제 완료', pending: '결제 대기', cancelled: '결제 취소', price_mismatch: '금액 확인 필요' }
+
+        async function load() {
+            root.innerHTML = loadingHtml('주문 상태를 확인하고 있습니다.')
+            if (!orderId || !user) {
+                root.innerHTML = errorHtml('주문 정보를 확인할 수 없습니다. 주문 내역에서 다시 확인해 주세요.') + '<a href="/shop/account/orders.html" class="text-link">주문 내역 보기</a>'
+                return
+            }
+            try {
+                const { order } = await api(`/api/shop/orders/${encodeURIComponent(orderId)}?user_id=${encodeURIComponent(user.id)}`)
+                const paid = order.status === 'paid'
+                // 서버가 결제 완료를 확인한 주문만 장바구니에서 뺀다.
+                const checkoutKey = `bootpay_shop_checkout:${orderId}`
+                const checkout = JSON.parse(sessionStorage.getItem(checkoutKey) || 'null')
+                if (paid && checkout) {
+                    if (checkout.mode === 'cart') subtractFromCart(checkout.items)
+                    sessionStorage.removeItem(checkoutKey)
+                }
+                const rows = [
+                    ['주문번호', order.order_id],
+                    ['주문 상품', order.order_name || order.product_name],
+                    ['결제 금액', money(order.total_price)],
+                    ['상태', STATUS[order.status] || order.status],
+                    ...(order.shipping ? [['배송지', `${order.shipping.address1} ${order.shipping.address2 || ''}`.trim()]] : []),
+                    ...(order.receipt_id ? [['영수증 ID', order.receipt_id]] : [])
+                ]
+                root.innerHTML = `
+                    <div class="result-symbol ${paid ? '' : 'is-pending'}" aria-hidden="true">${icon(paid ? 'check' : 'clock', 26)}</div>
+                    <h1>${paid ? '주문이 완료되었습니다.' : '결제를 확인하고 있어요.'}</h1>
+                    <p class="result-description">${paid ? '주문해 주셔서 감사합니다. 출고가 시작되면 휴대폰으로 알려 드릴게요.' : '결제 완료가 서버에서 아직 확인되지 않았습니다. 잠시 후 주문 내역에서 다시 확인해 주세요.'}</p>
+                    <dl class="result-details">${rows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('')}</dl>
+                    <div class="result-actions">
+                        <a class="button button-outline" href="/shop/account/orders.html">주문 내역 보기</a>
+                        <a class="button button-dark" href="/shop/products/index.html#collection">계속 쇼핑하기 <span aria-hidden="true">${icon('arrow-up-right')}</span></a>
+                    </div>`
+            } catch (error) {
+                root.innerHTML = errorHtml(error.status === 404 ? '이 계정에서 만든 주문을 찾지 못했습니다. 서버가 재시작되면 데모 주문 기록이 초기화됩니다.' : error.message, 'retry') + '<a href="/shop/account/orders.html" class="text-link">주문 내역 보기</a>'
+                document.getElementById('retry')?.addEventListener('click', load)
+            }
+        }
+        load()
+    </script>
+</body>
+</html>

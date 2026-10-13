@@ -12,3 +12,5 @@ CLAUDE.md
 
 # CDN config with actual keys (use config.example.js as template)
 cdn/config.js
+# 로컬 전용 키 (bootpay-mcp 로 발급한 운영 키 등)
+.env.local

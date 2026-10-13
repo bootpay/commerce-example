@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장바구니 — 오브제 데모샵</title>
+    <link rel="stylesheet" href="/shop/shop.css">
+</head>
+<body>
+    <div id="shop-header"></div>
+    <main id="main-content">
+        <div class="page-width standard-page">
+            <div class="page-title"><p class="eyebrow">YOUR EVERYDAY PICKS</p><h1>장바구니 <span id="title-count">0</span></h1><p>마음에 담아둔 물건들을 한 번 더 살펴보세요.</p></div>
+            <div id="cart-root"></div>
+        </div>
+    </main>
+    <div id="shop-footer"></div>
+    <script type="module">
+        import { findShopProduct, SHOP_DELIVERY } from '../catalog.js'
+        import { api, artFor, bindQuantity, cartCount, currentUser, errorHtml, escapeHtml, getCart, icon, loadingHtml, loginPath, money, quantityHtml, renderShell, setCartQuantity } from '../shop.js'
+
+        renderShell('cart')
+        const root = document.getElementById('cart-root')
+        let requestSeq = 0
+
+        async function render() {
+            const items = getCart()
+            document.getElementById('title-count').textContent = cartCount()
+            if (!items.length) {
+                root.innerHTML = `<div class="empty-state"><h2>아직 담아둔 물건이 없어요.</h2><p>일상에 어울리는 새로운 취향을 찾아보세요.</p><a href="/shop/products/index.html#collection" class="button button-dark">물건 둘러보기 <span aria-hidden="true">${icon('arrow-up-right')}</span></a></div>`
+                return
+            }
+
+            // 늦게 도착한 이전 견적 응답은 버린다.
+            const seq = ++requestSeq
+            if (!root.querySelector('.cart-layout')) root.innerHTML = loadingHtml('현재 상품 가격과 배송비를 확인하고 있습니다.')
+            let quote = null
+            let quoteError = ''
+            try {
+                quote = (await api('/api/shop/quote', { method: 'POST', body: { items } })).quote
+            } catch (error) {
+                quoteError = error.message
+            }
+            if (seq !== requestSeq) return
+
+            const user = currentUser()
+            const lineFor = item => quote?.lines.find(line => line.productId === item.productId && (line.optionId || '') === (item.optionId || ''))
+            const hasProblem = quote?.lines.some(line => line.problem)
+            const canCheckout = !!quote?.canCheckout
+
+            root.innerHTML = `<div class="cart-layout">
+                <section aria-label="장바구니 상품">
+                    <div class="cart-column-head"><span>담아둔 물건</span><span>수량 / 상품 금액</span></div>
+                    ${quoteError ? errorHtml(quoteError, 'retry-quote') : ''}
+                    ${hasProblem ? errorHtml('구매할 수 없는 상품이 있어요. 표시된 상품을 정리하면 주문 금액을 다시 확인합니다.') : ''}
+                    ${items.map((item, index) => {
+                        const line = lineFor(item)
+                        const product = findShopProduct(item.productId)
+                        const href = `/shop/products/detail.html?product_id=${encodeURIComponent(item.productId)}`
+                        const name = line?.name || product?.name || '장바구니 상품'
+                        return `<article class="cart-item">
+                            <a class="cart-item-photo" href="${href}" aria-label="${escapeHtml(name)}">${artFor(item.productId)}</a>
+                            <div class="cart-item-info">
+                                <a href="${href}"><h2>${escapeHtml(name)}</h2></a>
+                                ${line?.optionName ? `<p>${escapeHtml(line.optionName)}</p>` : ''}
+                                ${line ? `<p>${money(line.unitPrice)}</p>` : ''}
+                                ${line?.problem ? `<p class="unavailable-text">${escapeHtml(line.problem)}</p>` : ''}
+                                <button type="button" class="remove-item" data-remove="${index}">삭제</button>
+                            </div>
+                            <div class="cart-item-actions"><div data-qty="${index}">${quantityHtml({ value: item.quantity, label: `${name} 수량` })}</div><strong>${line ? money(line.subtotal) : '—'}</strong></div>
+                        </article>`
+                    }).join('')}
+                    <a href="/shop/products/index.html#collection" class="text-link cart-continue"><span aria-hidden="true">${icon('arrow-left')}</span> 계속 둘러보기</a>
+                </section>
+                <aside class="order-summary" aria-label="주문 예상 금액">
+                    <p class="eyebrow">ORDER SUMMARY</p>
+                    <h2>주문 예상 금액</h2>
+                    <dl>
+                        <div><dt>상품 금액</dt><dd>${quote ? money(quote.subtotal) : '—'}</dd></div>
+                        <div><dt>배송비</dt><dd>${quote ? (quote.deliveryFee === 0 ? '무료' : money(quote.deliveryFee)) : '—'}</dd></div>
+                        <div class="summary-total"><dt>총 결제 예정 금액</dt><dd>${quote ? money(quote.total) : '—'}</dd></div>
+                    </dl>
+                    ${quote && quote.deliveryFee > 0 ? `<p class="inline-note">${money(SHOP_DELIVERY.freeThreshold - quote.subtotal)} 더 담으면 무료배송이에요.</p>` : ''}
+                    ${user
+                        ? `<a href="/shop/orders/new.html?mode=cart" class="button button-dark button-full" ${canCheckout ? '' : 'aria-disabled="true" tabindex="-1" style="pointer-events:none;opacity:.48"'}>주문하기 <span aria-hidden="true">${icon('arrow-up-right')}</span></a><p class="summary-help">쿠폰과 배송지는 다음 단계 주문서에서 입력합니다.</p>`
+                        : `<a href="${loginPath('/shop/orders/new.html?mode=cart')}" class="button button-dark button-full">로그인하고 주문하기 <span aria-hidden="true">${icon('arrow-up-right')}</span></a><p class="summary-help">본인인증 회원 전용 스토어입니다. 담아둔 상품은 로그인 후에도 그대로 남아 있어요.</p>`}
+                    <p class="secure-checkout"><svg width="12" height="15" viewBox="0 0 12 15" fill="none" aria-hidden="true"><rect x="1" y="6" width="10" height="8" stroke="currentColor"/><path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor"/></svg>Bootpay 안전 결제</p>
+                </aside>
+            </div>`
+
+            root.querySelector('#retry-quote')?.addEventListener('click', render)
+            root.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => { setCartQuantity(items[button.dataset.remove], 0); render() }))
+            root.querySelectorAll('[data-qty]').forEach(slot => {
+                const item = items[slot.dataset.qty]
+                bindQuantity(slot.firstElementChild, 99, value => { setCartQuantity(item, value); render() })
+            })
+        }
+
+        window.addEventListener('storage', render)
+        render()
+    </script>
+</body>
+</html>

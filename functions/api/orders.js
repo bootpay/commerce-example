@@ -1,9 +1,14 @@
 // Cloudflare Pages Functions - /api/orders
 // Widget 예제용 주문 생성 API
 
+import { getRawUser, listOrders, saveOrder } from '../_shared/demo-store.js'
+import { createShopOrder } from '../_shared/shop-order.js'
+
 // 상품 정보 (서버에서 관리 - 위변조 방지)
 const PRODUCTS = {
-    'premium_earphone': { name: '프리미엄 무선 이어폰 Pro Max', price: 4000 }
+    'premium_earphone': { name: '프리미엄 무선 이어폰 Pro Max', price: 4000 },
+    'smart_watch': { name: '헬스케어 스마트 워치', price: 12900 },
+    'desk_lamp': { name: '무드 LED 데스크 램프', price: 7900 }
 }
 
 // 쿠폰 정보
@@ -27,14 +32,10 @@ export async function onRequestOptions() {
 }
 
 // GET /api/orders - 전체 주문 목록 (데모용)
-export async function onRequestGet(context) {
-    // Cloudflare KV에서 주문 목록 조회 (실제 구현 시)
-    // const orders = await context.env.ORDERS_KV.list()
-
+export async function onRequestGet() {
     return new Response(JSON.stringify({
         success: true,
-        message: 'Orders API is working',
-        orders: []
+        orders: listOrders()
     }), { headers: corsHeaders })
 }
 
@@ -42,7 +43,18 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
     try {
         const body = await context.request.json()
-        const { product_id, quantity, coupon_code, mileage_amount, pg, method } = body
+
+        // 쇼핑몰 데모 주문서: 여러 상품·옵션 + 배송지. 금액은 shop/catalog.js 로 서버가 계산한다.
+        if (Array.isArray(body.items)) {
+            const result = createShopOrder(body, getRawUser(body.user_id))
+            if (!result.ok) {
+                return new Response(JSON.stringify({ success: false, code: result.code, message: result.message }), { status: result.status, headers: corsHeaders })
+            }
+            saveOrder(result.order)
+            return new Response(JSON.stringify(result.response), { headers: corsHeaders })
+        }
+
+        const { product_id, quantity, coupon_code, mileage_amount, pg, method, user_id } = body
 
         // 1. 상품 검증
         const product = PRODUCTS[product_id]
@@ -81,8 +93,21 @@ export async function onRequestPost(context) {
         // 6. 주문 ID 생성
         const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
 
-        // 실제 환경에서는 KV 또는 D1에 저장
-        // await context.env.ORDERS_KV.put(orderId, JSON.stringify(order))
+        saveOrder({
+            order_id: orderId,
+            product_id,
+            product_name: product.name,
+            quantity: quantity || 1,
+            original_price: product.price * (quantity || 1),
+            coupon_code,
+            mileage_amount: mileage_amount || 0,
+            total_price: totalPrice,
+            pg: pg || 'nicepay',
+            method: method || 'card',
+            user_id: user_id || null,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        })
 
         return new Response(JSON.stringify({
             success: true,

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 — 오브제 데모샵</title>
+    <link rel="stylesheet" href="/shop/shop.css">
+</head>
+<body>
+    <div id="shop-header"></div>
+    <main id="main-content">
+        <div class="page-width account-page">
+            <div class="account-intro">
+                <p class="eyebrow">WELCOME BACK</p>
+                <h1>다시 만나서<br>반가워요.</h1>
+                <p>로그인하면 담아둔 상품으로 바로 주문을 이어갈 수 있어요. 주문은 본인인증을 마친 회원만 할 수 있습니다.</p>
+                <span class="account-decoration" aria-hidden="true">again.</span>
+            </div>
+            <div class="account-form-wrap">
+                <form id="login-form" novalidate>
+                    <div class="form-field"><label for="email">이메일</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+                    <div class="form-field"><label for="password">비밀번호</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+                    <div id="message"></div>
+                    <button type="submit" class="button button-dark button-full" id="submit">로그인 <span aria-hidden="true" data-icon="arrow-right"></span></button>
+                </form>
+                <div class="account-help">
+                    <p>아직 회원이 아니신가요? <a id="register-link" href="/auth/register.html">본인인증하고 회원가입</a></p>
+                    <p>관리자 데모 계정: <code>admin@demo.local</code> / <code>admin1234</code> — 관리자 화면 전용이며 주문은 할 수 없습니다.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="shop-footer"></div>
+    <script type="module">
+        import { api, errorHtml, icon, renderShell, safeNext, saveUser } from '/shop/shop.js'
+
+        renderShell('login')
+        document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon) })
+        const next = safeNext(new URLSearchParams(location.search).get('next'))
+        document.getElementById('register-link').href = `/auth/register.html?${new URLSearchParams({ next })}`
+        const form = document.getElementById('login-form')
+        const message = document.getElementById('message')
+        const submit = document.getElementById('submit')
+
+        form.addEventListener('submit', async event => {
+            event.preventDefault()
+            if (!form.reportValidity()) return
+            submit.disabled = true
+            message.innerHTML = ''
+            try {
+                const { user } = await api('/api/auth/login', { method: 'POST', body: { email: form.email.value, password: form.password.value } })
+                saveUser(user)
+                location.href = user.role === 'admin' ? '/admin/users/index.html' : next
+            } catch (error) {
+                message.innerHTML = errorHtml(error.message)
+                submit.disabled = false
+            }
+        })
+    </script>
+</body>
+</html>
