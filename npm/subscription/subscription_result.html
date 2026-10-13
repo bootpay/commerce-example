@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechMall - 구독 결과 (자동결제, NPM)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .back-link {
+            color: #6366f1;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .result-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .result-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+            color: white;
+        }
+        .result-icon.success {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .result-icon.error {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+        }
+        .result-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        .result-message {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .order-details {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .order-details h3 {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 16px;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .detail-value {
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: right;
+            word-break: break-all;
+        }
+        .detail-value.mono {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+        }
+        .detail-value.accent {
+            color: #6366f1;
+        }
+
+        /* Recurring demo box */
+        .recurring-box {
+            background: #eef2ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .recurring-box h3 {
+            font-size: 0.95rem;
+            color: #4338ca;
+            margin-bottom: 8px;
+        }
+        .recurring-box p {
+            font-size: 0.85rem;
+            color: #6366f1;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .recharge-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: white;
+            border: 2px solid #6366f1;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #4338ca;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .recharge-btn:hover:not(:disabled) {
+            background: #6366f1;
+            color: white;
+        }
+        .recharge-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .recharge-btn .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .recharge-btn.loading .spinner {
+            display: block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .charge-log {
+            margin-top: 16px;
+            font-size: 0.82rem;
+            color: #475569;
+        }
+        .charge-log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+        .charge-log-item .rid {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #6366f1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn {
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            color: #64748b;
+            font-size: 1rem;
+        }
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error { background: #dc2626; }
+        .toast.success { background: #16a34a; }
+
+        /* Bootpay Footer Styles */
+        .bootpay-footer {
+            background: #2d3748;
+            padding: 40px 0;
+            width: 100%;
+            margin-top: auto;
+        }
+        .bootpay-footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .bootpay-footer-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        .bootpay-footer-logo { flex: 0 0 auto; }
+        .bootpay-footer-logo img { height: 24px; opacity: 0.8; }
+        .bootpay-footer-info { flex: 1; min-width: 280px; }
+        .bootpay-footer-address {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .bootpay-footer-contact { min-width: 150px; }
+        .bootpay-footer-contact-title,
+        .bootpay-footer-links-title {
+            color: #e2e8f0;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .bootpay-footer-contact-text,
+        .bootpay-footer-links-text {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .bootpay-footer-links { min-width: 150px; }
+        .bootpay-footer-links-text a {
+            color: #a0aec0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .bootpay-footer-links-text a:hover { color: #e2e8f0; }
+        @media (max-width: 768px) {
+            .bootpay-footer-row { flex-direction: column; gap: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="../index.html" class="logo">
+            <span class="logo-icon">🛍️</span>
+            TechMall
+        </a>
+        <a href="../index.html" class="back-link">← 예제 목록으로</a>
+    </header>
+
+    <div class="result-container">
+        <div class="result-card">
+            <div class="loading" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">구독 결과를 확인하고 있습니다...</p>
+            </div>
+
+            <div id="resultContent" style="display: none;">
+                <div class="result-icon success" id="resultIcon">
+                    <span id="resultIconEmoji">🔄</span>
+                </div>
+                <h1 class="result-title" id="resultTitle">구독이 시작되었습니다</h1>
+                <p class="result-message" id="resultMessage">결제 카드가 등록되었고 첫 회차 결제가 완료되었습니다.</p>
+
+                <div class="order-details">
+                    <h3>구독 정보</h3>
+                    <div id="detailRows"></div>
+                </div>
+
+                <!-- 정기결제(재청구) 데모 -->
+                <div class="recurring-box" id="recurringBox" style="display:none;">
+                    <h3>🔁 정기결제 재청구 테스트</h3>
+                    <p>발급된 빌링키로 카드 재입력 없이 다음 회차를 즉시 청구합니다.
+                       실서비스에서는 결제 주기마다 서버 스케줄러가 이 호출을 자동 실행합니다.</p>
+                    <button class="recharge-btn" id="rechargeBtn">
+                        <span class="spinner"></span>
+                        <span class="btn-text">이 빌링키로 다음 회차 즉시 결제</span>
+                    </button>
+                    <div class="charge-log" id="chargeLog"></div>
+                </div>
+
+                <div class="btn-group">
+                    <a href="subscription.html" class="btn btn-secondary">플랜 다시 보기</a>
+                    <a href="../index.html" class="btn btn-primary">홈으로 이동</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search)
+            const result = {}
+            for (const [key, value] of params) result[key] = decodeURIComponent(value)
+            return result
+        }
+
+        function getCurrentEnv() {
+            const params = new URLSearchParams(window.location.search)
+            return params.get('env') || localStorage.getItem('bootpay_env') || 'production'
+        }
+
+        function maskCardNumber(cardNo) {
+            if (!cardNo) return '-'
+            if (cardNo.includes('*')) return cardNo
+            if (cardNo.length >= 8) return cardNo.slice(0, 4) + '-****-****-' + cardNo.slice(-4)
+            return cardNo
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-'
+            try {
+                return new Date(dateString).toLocaleString('ko-KR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
+                })
+            } catch (e) { return dateString }
+        }
+
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text
+            const div = document.createElement('div')
+            div.textContent = text
+            return div.innerHTML
+        }
+
+        const state = {
+            billingKey: null,
+            planId: null,
+            env: 'production'
+        }
+
+        function render(params) {
+            document.getElementById('loadingState').style.display = 'none'
+            document.getElementById('resultContent').style.display = 'block'
+
+            const isSuccess = params.status === '1' || params.status === 'done'
+            if (!isSuccess) {
+                document.getElementById('resultIcon').className = 'result-icon error'
+                document.getElementById('resultIconEmoji').textContent = '✕'
+                document.getElementById('resultTitle').textContent = '구독에 실패했습니다'
+                document.getElementById('resultMessage').textContent = params.message || '정기결제 처리 중 문제가 발생했습니다.'
+            }
+
+            const details = []
+            if (params.order_name) details.push({ label: '구독 상품', value: params.order_name })
+            if (params.price !== undefined) details.push({ label: '월 결제금액', value: `₩${Number(params.price).toLocaleString()} / 월`, accent: true })
+            if (params.card_company || params.card_no) {
+                details.push({ label: '등록 카드', value: `${params.card_company || ''} ${maskCardNumber(params.card_no)}`.trim() })
+            }
+            if (params.billing_key) details.push({ label: '빌링키', value: params.billing_key, mono: true })
+            if (params.receipt_id) details.push({ label: '첫 결제 영수증', value: params.receipt_id, mono: true })
+            if (params.next_billing_at) details.push({ label: '다음 결제 예정일', value: formatDate(params.next_billing_at), accent: true })
+
+            document.getElementById('detailRows').innerHTML = details.map(d => `
+                <div class="detail-row">
+                    <span class="detail-label">${d.label}</span>
+                    <span class="detail-value${d.mono ? ' mono' : ''}${d.accent ? ' accent' : ''}">${escapeHtml(d.value)}</span>
+                </div>
+            `).join('')
+
+            // 빌링키가 있으면 재청구 데모 노출
+            if (isSuccess && params.billing_key && params.plan_id) {
+                state.billingKey = params.billing_key
+                state.planId = params.plan_id
+                state.env = params.env || getCurrentEnv()
+                document.getElementById('recurringBox').style.display = 'block'
+            }
+        }
+
+        async function recharge() {
+            const btn = document.getElementById('rechargeBtn')
+            btn.classList.add('loading')
+            btn.disabled = true
+            try {
+                const res = await fetch('/api/subscribe/charge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        billing_key: state.billingKey,
+                        plan_id: state.planId,
+                        env: state.env
+                    })
+                })
+                const data = await res.json()
+                if (!data.success) throw new Error(data.message || '재청구 실패')
+
+                const log = document.getElementById('chargeLog')
+                const item = document.createElement('div')
+                item.className = 'charge-log-item'
+                item.innerHTML = `<span>₩${Number(data.price).toLocaleString()} 청구 완료</span><span class="rid">${escapeHtml(data.receipt_id)}</span>`
+                log.prepend(item)
+                showToast('정기결제 재청구가 완료되었습니다.', 'success')
+            } catch (error) {
+                console.error('재청구 실패:', error)
+                showToast('재청구 실패: ' + error.message, 'error')
+            } finally {
+                btn.classList.remove('loading')
+                btn.disabled = false
+            }
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast')
+            toast.textContent = message
+            toast.className = 'toast show ' + type
+            setTimeout(() => { toast.className = 'toast' }, 3000)
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = getUrlParams()
+            console.log('=== Subscription Result (NPM) ===', params)
+            render(params)
+            document.getElementById('rechargeBtn')?.addEventListener('click', recharge)
+        })
+    </script>
+
+    <!-- Bootpay Footer -->
+    <footer class="bootpay-footer">
+        <div class="bootpay-footer-container">
+            <div class="bootpay-footer-row">
+                <div class="bootpay-footer-logo">
+                    <img src="https://www.bootpay.co.kr/assets/logo/bootpay_gray" alt="부트페이">
+                </div>
+                <div class="bootpay-footer-info">
+                    <p class="bootpay-footer-address">
+                        (주)부트페이 | 대표 정재훈<br>
+                        사업자 등록번호 618-87-00495 | 통신판매업신고번호 2022-서울구로-1854<br>
+                        서울특별시 구로구 디지털로26길 61, 1202호 | pg@bootpay.co.kr
+                    </p>
+                </div>
+                <div class="bootpay-footer-contact">
+                    <div class="bootpay-footer-contact-title">CONTACT</div>
+                    <p class="bootpay-footer-contact-text">
+                        TEL. 1599-4062<br>
+                        FAX. 02-6008-9760
+                    </p>
+                </div>
+                <div class="bootpay-footer-links">
+                    <div class="bootpay-footer-links-title">LINKS</div>
+                    <p class="bootpay-footer-links-text">
+                        <a href="https://admin.bootpay.co.kr" target="_blank">부트페이 관리자 이동</a><br>
+                        <a href="https://docs.bootpay.co.kr" target="_blank">부트페이 개발문서 이동</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

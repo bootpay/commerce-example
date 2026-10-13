@@ -2,6 +2,8 @@
 // 결제링크 생성 API - Bootpay Commerce REST API 직접 호출 (fetch 사용)
 
 // 환경별 설정
+// Commerce API 는 PG API(bootpay.co.kr)와 다른 호스트(bootapi.com/v1)를 사용한다.
+// 인증은 동일한 client_key/secret_key 의 Basic Auth.
 const ENV_CONFIG = {
     development: {
         client_key: 'hxS-Up--5RvT6oU6QJE0JA',
@@ -48,39 +50,13 @@ function getCommonHeaders() {
     }
 }
 
-// Access Token 발급
-async function getAccessToken(config) {
-    const credentials = btoa(`${config.client_key}:${config.secret_key}`)
-
-    const response = await fetch(`${config.api_base}/request/token`, {
-        method: 'POST',
-        headers: {
-            ...getCommonHeaders(),
-            'Authorization': `Basic ${credentials}`
-        },
-        body: JSON.stringify({
-            client_key: config.client_key,
-            secret_key: config.secret_key
-        })
-    })
-
-    const data = await response.json()
-    console.log('[Payment Link] Token Response:', JSON.stringify(data, null, 2))
-
-    if (!response.ok || !data.access_token) {
-        throw new Error(data.message || data.error || 'Access Token 발급 실패')
-    }
-
-    return data.access_token
-}
-
 // Invoice 생성
-async function createInvoice(config, accessToken, invoiceParams) {
+async function createInvoice(config, authHeader, invoiceParams) {
     const response = await fetch(`${config.api_base}/invoices`, {
         method: 'POST',
         headers: {
             ...getCommonHeaders(),
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': authHeader
         },
         body: JSON.stringify(invoiceParams)
     })
@@ -103,12 +79,12 @@ async function createInvoice(config, accessToken, invoiceParams) {
 }
 
 // Invoice 알림 발송
-async function notifyInvoice(config, accessToken, invoiceId, sendTypes) {
+async function notifyInvoice(config, authHeader, invoiceId, sendTypes) {
     const response = await fetch(`${config.api_base}/invoices/${invoiceId}/notify`, {
         method: 'POST',
         headers: {
             ...getCommonHeaders(),
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': authHeader
         },
         body: JSON.stringify({ send_types: sendTypes })
     })
@@ -205,9 +181,8 @@ export async function onRequestPost(context) {
         // Bootpay Commerce REST API 호출 (fetch 사용)
         // ========================================
 
-        // 1. Access Token 발급
-        const accessToken = await getAccessToken(config)
-        console.log('[Payment Link] Access Token 발급 완료')
+        // 1. Basic Auth 헤더 생성 (client_key:secret_key를 Base64 인코딩)
+        const authHeader = 'Basic ' + btoa(`${config.client_key}:${config.secret_key}`)
 
         // 2. Invoice 생성 파라미터
         // 주의: extra, metadata 등을 빈 객체 {}로 보내면 Bootpay API에서 to_unsafe_h 에러 발생
@@ -239,7 +214,7 @@ export async function onRequestPost(context) {
         console.log('[Payment Link] Invoice 생성 요청:', JSON.stringify(invoiceParams, null, 2))
 
         // 3. Invoice 생성
-        const invoiceResponse = await createInvoice(config, accessToken, invoiceParams)
+        const invoiceResponse = await createInvoice(config, authHeader, invoiceParams)
         console.log('[Payment Link] Invoice 생성 응답:', JSON.stringify(invoiceResponse, null, 2))
 
         // 4. 알림 발송 (Invoice 생성 후)
@@ -247,7 +222,7 @@ export async function onRequestPost(context) {
             try {
                 const notifyResponse = await notifyInvoice(
                     config,
-                    accessToken,
+                    authHeader,
                     invoiceResponse.invoice_id,
                     getSendTypes(notification_method)
                 )

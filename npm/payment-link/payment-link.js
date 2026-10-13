@@ -60,6 +60,9 @@ let notificationMethod = 'email'
 // 직접 금액 입력 모드
 let isCustomAmount = false
 
+// 현재 PG사 (빈 문자열이면 기본/자동)
+let currentPg = ''
+
 // 현재 환경의 설정 가져오기
 function getCurrentConfig() {
     return ENV_CONFIG[currentEnv]
@@ -80,7 +83,14 @@ document.addEventListener('DOMContentLoaded', function () {
         envSelect.value = currentEnv
     }
 
-    console.log(`[Payment Link] 환경: ${currentEnv}`)
+    // PG사 복원
+    currentPg = localStorage.getItem('bootpay_pg') || ''
+    const pgSelect = document.getElementById('pg')
+    if (pgSelect) {
+        pgSelect.value = currentPg
+    }
+
+    console.log(`[Payment Link] 환경: ${currentEnv}, PG: ${currentPg || '기본(자동)'}`)
 
     // 입력 필드 이벤트 리스너 (미리보기 업데이트)
     document.getElementById('customerName').addEventListener('input', updatePreview)
@@ -109,6 +119,17 @@ function changeEnv() {
         production: 'Production (실서비스)'
     }
     alert(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다.`)
+}
+
+// PG사 변경
+function changePg() {
+    const pgSelect = document.getElementById('pg')
+    currentPg = pgSelect.value
+
+    // PG사 저장
+    localStorage.setItem('bootpay_pg', currentPg)
+
+    console.log(`[Payment Link] PG 변경: ${currentPg || '기본(자동)'}`)
 }
 
 // 상품 선택
@@ -345,7 +366,8 @@ async function sendPaymentLink() {
                 notification_method: notificationMethod,
                 memo: orderMemo,
                 redirect_url: window.location.origin + '/npm/payment-link/payment-link_result.html',
-                env: currentEnv
+                env: currentEnv,
+                ...(currentPg ? { pg: currentPg } : {})
             })
         })
 
@@ -391,3 +413,4 @@ window.selectNotificationMethod = selectNotificationMethod
 window.sendPaymentLink = sendPaymentLink
 window.toggleSettings = toggleSettings
 window.changeEnv = changeEnv
+window.changePg = changePg

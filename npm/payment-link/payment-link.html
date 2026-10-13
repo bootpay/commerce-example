@@ -80,17 +80,25 @@
 
         /* Main Content */
         .main-content {
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
             padding: 48px 20px 80px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 32px;
+            gap: 28px;
+            align-items: start;
         }
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* Right column wrapper (recipient form + sticky summary) */
+        .recipient-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         /* Product Selection */
@@ -282,48 +290,95 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 24px;
+            margin-top: 20px;
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25);
         }
         .submit-btn:hover {
-            opacity: 0.9;
+            opacity: 0.95;
             transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(245, 158, 11, 0.32);
         }
         .submit-btn:disabled {
             background: #d1d5db;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        /* Preview */
-        .preview-section {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 24px;
+        /* Sticky Summary Card */
+        .summary-card {
+            position: sticky;
+            top: 24px;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+            transition: box-shadow 0.2s, transform 0.2s;
         }
-        .preview-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 12px;
+        .summary-card:hover {
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
         }
-        .preview-item {
+        .summary-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-card-desc {
+            color: #94a3b8;
+            font-size: 0.82rem;
+            margin-bottom: 18px;
+        }
+        .summary-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .summary-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #e2e8f0;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 11px 0;
+            border-bottom: 1px solid #f1f5f9;
         }
-        .preview-item:last-child {
+        .summary-row:last-of-type {
             border-bottom: none;
         }
-        .preview-label {
+        .summary-label {
             color: #64748b;
             font-size: 0.9rem;
+            flex-shrink: 0;
         }
-        .preview-value {
+        .summary-value {
             color: #1e293b;
             font-weight: 500;
             font-size: 0.9rem;
+            text-align: right;
+            word-break: break-all;
+        }
+        /* Total (결제금액) emphasis */
+        .summary-row.total {
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 2px solid #1e293b;
+            border-bottom: none;
+            align-items: center;
+        }
+        .summary-row.total .summary-label {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .summary-row.total .summary-value {
+            color: #d97706;
+            font-weight: 700;
+            font-size: 1.35rem;
         }
 
         /* Settings Panel */
@@ -553,78 +608,83 @@
             </div>
         </div>
 
-        <!-- 수신자 정보 -->
-        <div class="section-card">
-            <h2 class="section-title">
-                <span class="step">2</span>
-                수신자 정보
-            </h2>
-            <p class="section-desc">결제 링크를 받을 고객 정보를 입력하세요.</p>
+        <!-- 수신자 정보 + 요약 -->
+        <div class="recipient-column">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <span class="step">2</span>
+                    수신자 정보
+                </h2>
+                <p class="section-desc">결제 링크를 받을 고객 정보를 입력하세요.</p>
 
-            <div class="form-group">
-                <label class="form-label">고객명 <span class="required">*</span></label>
-                <input type="text" class="form-input" id="customerName" placeholder="홍길동" required>
-            </div>
-
-            <div class="notification-methods">
-                <label class="notification-method selected" onclick="selectNotificationMethod('email')">
-                    <input type="radio" name="notificationMethod" value="email" checked>
-                    <div class="notification-method-icon">📧</div>
-                    <div class="notification-method-label">이메일</div>
-                </label>
-                <label class="notification-method" onclick="selectNotificationMethod('sms')">
-                    <input type="radio" name="notificationMethod" value="sms">
-                    <div class="notification-method-icon">📱</div>
-                    <div class="notification-method-label">SMS</div>
-                </label>
-                <label class="notification-method" onclick="selectNotificationMethod('both')">
-                    <input type="radio" name="notificationMethod" value="both">
-                    <div class="notification-method-icon">📬</div>
-                    <div class="notification-method-label">둘 다</div>
-                </label>
-            </div>
-
-            <div class="form-group" id="emailGroup">
-                <label class="form-label">이메일 주소 <span class="required">*</span></label>
-                <input type="email" class="form-input" id="customerEmail" placeholder="customer@example.com">
-                <p class="form-hint">결제 링크가 이 주소로 발송됩니다.</p>
-            </div>
-
-            <div class="form-group" id="phoneGroup" style="display: none;">
-                <label class="form-label">휴대폰 번호 <span class="required">*</span></label>
-                <input type="tel" class="form-input" id="customerPhone" placeholder="010-1234-5678">
-                <p class="form-hint">결제 링크가 SMS로 발송됩니다.</p>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">메모 (선택)</label>
-                <input type="text" class="form-input" id="orderMemo" placeholder="고객에게 전달할 메시지">
-            </div>
-
-            <!-- 미리보기 -->
-            <div class="preview-section">
-                <div class="preview-title">발송 정보 미리보기</div>
-                <div class="preview-item">
-                    <span class="preview-label">상품명</span>
-                    <span class="preview-value" id="previewProduct">Basic 플랜</span>
+                <div class="form-group">
+                    <label class="form-label">고객명 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="customerName" placeholder="홍길동" required>
                 </div>
-                <div class="preview-item">
-                    <span class="preview-label">결제금액</span>
-                    <span class="preview-value" id="previewPrice">₩29,900</span>
+
+                <div class="notification-methods">
+                    <label class="notification-method selected" onclick="selectNotificationMethod('email')">
+                        <input type="radio" name="notificationMethod" value="email" checked>
+                        <div class="notification-method-icon">📧</div>
+                        <div class="notification-method-label">이메일</div>
+                    </label>
+                    <label class="notification-method" onclick="selectNotificationMethod('sms')">
+                        <input type="radio" name="notificationMethod" value="sms">
+                        <div class="notification-method-icon">📱</div>
+                        <div class="notification-method-label">SMS</div>
+                    </label>
+                    <label class="notification-method" onclick="selectNotificationMethod('both')">
+                        <input type="radio" name="notificationMethod" value="both">
+                        <div class="notification-method-icon">📬</div>
+                        <div class="notification-method-label">둘 다</div>
+                    </label>
                 </div>
-                <div class="preview-item">
-                    <span class="preview-label">수신자</span>
-                    <span class="preview-value" id="previewRecipient">-</span>
+
+                <div class="form-group" id="emailGroup">
+                    <label class="form-label">이메일 주소 <span class="required">*</span></label>
+                    <input type="email" class="form-input" id="customerEmail" placeholder="customer@example.com">
+                    <p class="form-hint">결제 링크가 이 주소로 발송됩니다.</p>
                 </div>
-                <div class="preview-item">
-                    <span class="preview-label">발송방법</span>
-                    <span class="preview-value" id="previewMethod">이메일</span>
+
+                <div class="form-group" id="phoneGroup" style="display: none;">
+                    <label class="form-label">휴대폰 번호 <span class="required">*</span></label>
+                    <input type="tel" class="form-input" id="customerPhone" placeholder="010-1234-5678">
+                    <p class="form-hint">결제 링크가 SMS로 발송됩니다.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">메모 (선택)</label>
+                    <input type="text" class="form-input" id="orderMemo" placeholder="고객에게 전달할 메시지">
                 </div>
             </div>
 
-            <button class="submit-btn" onclick="sendPaymentLink()">
-                결제링크 발송하기
-            </button>
+            <!-- Sticky 요약 카드 -->
+            <div class="summary-card">
+                <h3 class="summary-card-title">발송 요약</h3>
+                <p class="summary-card-desc">발송 전 내용을 확인하세요.</p>
+                <div class="summary-rows">
+                    <div class="summary-row">
+                        <span class="summary-label">상품명</span>
+                        <span class="summary-value" id="previewProduct">Basic 플랜</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">수신자</span>
+                        <span class="summary-value" id="previewRecipient">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">발송방법</span>
+                        <span class="summary-value" id="previewMethod">이메일</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span class="summary-label">결제금액</span>
+                        <span class="summary-value" id="previewPrice">₩29,900</span>
+                    </div>
+                </div>
+
+                <button class="submit-btn" onclick="sendPaymentLink()">
+                    결제링크 발송하기
+                </button>
+            </div>
         </div>
     </div>
 
@@ -641,6 +701,37 @@
                     <option value="development">Development (테스트)</option>
                     <option value="stage">Stage</option>
                     <option value="production" selected>Production (실서비스)</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <label class="settings-label">PG사</label>
+                <select class="settings-select" id="pg" onchange="changePg()">
+                    <option value="">기본 (자동 / 통합결제창)</option>
+                    <optgroup label="국내 일반결제">
+                        <option value="nicepay">나이스페이먼츠</option>
+                        <option value="tosspayments">토스페이먼츠</option>
+                        <option value="inicis">KG이니시스</option>
+                        <option value="kcp">NHN KCP</option>
+                        <option value="danal">다날</option>
+                        <option value="smartro">스마트로</option>
+                        <option value="welcome">웰컴페이먼츠</option>
+                        <option value="easypay">KICC 이지페이</option>
+                        <option value="payapp">페이앱</option>
+                        <option value="payletter">페이레터</option>
+                        <option value="settle">세틀뱅크</option>
+                    </optgroup>
+                    <optgroup label="간편결제">
+                        <option value="kakaopay">카카오페이</option>
+                        <option value="naverpay">네이버페이</option>
+                        <option value="payco">페이코</option>
+                        <option value="tosspay">토스페이</option>
+                        <option value="samsungpay">삼성페이</option>
+                        <option value="applepay">애플페이</option>
+                    </optgroup>
+                    <optgroup label="해외결제">
+                        <option value="eximbay">엑심베이</option>
+                        <option value="paypal">페이팔</option>
+                    </optgroup>
                 </select>
             </div>
         </div>

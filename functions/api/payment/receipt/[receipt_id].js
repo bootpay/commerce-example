@@ -1,6 +1,8 @@
 // Cloudflare Pages Functions - /api/payment/receipt/:receipt_id
 // Bootpay API를 통해 결제 정보 조회
 
+import { withPgSecret } from '../../../_shared/pg-secret.js'
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -11,24 +13,23 @@ const corsHeaders = {
 // 환경별 Bootpay API 설정
 const ENV_CONFIG = {
     development: {
-        application_id: '692682dfb2084136e29ac1dc',
-        private_key: 'vz63xmu7p7Vs90yHNuggDiQYPFZVWkUZ8JJFwcBDPsI=',
+        client_key: 'toRyMm9vThyfxw_kGmTkWg',
         api_base: 'https://dev-api.bootpay.co.kr'
     },
     stage: {
-        application_id: '6927d523472c3a791b6250d0', // Stage 환경 키 (필요시 변경)
-        private_key: 'FUstljVVgv2P5733quhf+ZaZZbU8tKGMptfGrcPb1jI=',
+        client_key: 'dS-xBsOP9MhbxlvHVidxwQ',
         api_base: 'https://stage-api.bootpay.co.kr'
     },
     production: {
-        application_id: '6927d523472c3a791b6250d0', // Production 환경 키
-        private_key: 'FUstljVVgv2P5733quhf+ZaZZbU8tKGMptfGrcPb1jI=',
+        client_key: 'dS-xBsOP9MhbxlvHVidxwQ',
         api_base: 'https://api.bootpay.co.kr'
     }
 }
 
-function getConfig(env) {
-    return ENV_CONFIG[env] || ENV_CONFIG.production
+// secret_key 는 환경변수에서 찾는다 (functions/_shared/pg-secret.js).
+function getConfig(env, vars) {
+    const name = ENV_CONFIG[env] ? env : 'production'
+    return withPgSecret(ENV_CONFIG[name], name, vars)
 }
 
 export async function onRequestOptions() {
@@ -48,35 +49,21 @@ export async function onRequestGet(context) {
             }), { status: 400, headers: corsHeaders })
         }
 
-        const config = getConfig(env)
+        const config = getConfig(env, context.env)
+        if (!config.secret_key) {
+            return new Response(JSON.stringify({ success: false, message: '서버에 Bootpay PG secret_key 환경변수가 설정되지 않았습니다.' }), { status: 500, headers: corsHeaders })
+        }
         const apiBase = config.api_base
 
-        // Bootpay API 토큰 발급
-        const tokenResponse = await fetch(`${apiBase}/v2/request/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                application_id: config.application_id,
-                private_key: config.private_key
-            })
-        })
-
-        const tokenData = await tokenResponse.json()
-
-        if (!tokenData.access_token) {
-            return new Response(JSON.stringify({
-                success: false,
-                message: 'Bootpay API 인증 실패',
-                error: tokenData
-            }), { status: 500, headers: corsHeaders })
-        }
+        // Basic Auth 헤더 생성 (client_key:secret_key를 Base64 인코딩)
+        const authHeader = 'Basic ' + btoa(`${config.client_key}:${config.secret_key}`)
 
         // 결제 정보 조회
         const receiptResponse = await fetch(`${apiBase}/v2/receipt/${receiptId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${tokenData.access_token}`
+                'Authorization': authHeader
             }
         })
 

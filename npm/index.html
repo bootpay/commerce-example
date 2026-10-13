@@ -74,6 +74,9 @@
         .demo-icon.payment-link {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         }
+        .demo-icon.brandpay {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+        }
         .demo-card h2 {
             font-size: 1.5rem;
             color: #1a1a2e;
@@ -103,6 +106,24 @@
         }
         .demo-card.payment-link .demo-btn {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .demo-card.brandpay .demo-btn {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            color: white;
+        }
+        .demo-icon.integrated {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        }
+        .demo-card.integrated .demo-btn {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+            color: white;
+        }
+        .demo-icon.subscription {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .demo-card.subscription .demo-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
         }
         .demo-card:hover .demo-btn {
@@ -185,6 +206,33 @@
                 <span class="badge npm">NPM</span>
                 <h2>주문서 링크</h2>
                 <p>고객에게 이메일 또는 SMS로 결제 링크를 발송하여 비대면 결제를 요청할 수 있습니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
+
+            <a href="integrated/integrated.html" class="demo-card integrated">
+                <div class="demo-icon integrated">💰</div>
+                <span class="badge available">Available</span>
+                <span class="badge npm">NPM</span>
+                <h2>통합결제</h2>
+                <p>Bootpay.requestPayment() 한 번 호출로 PG·결제수단을 선택할 수 있는 통합 결제창을 띄웁니다. 가장 기본적인 연동 방식입니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
+
+            <a href="brandpay/brandpay.html" class="demo-card brandpay">
+                <div class="demo-icon brandpay">⚡</div>
+                <span class="badge available">Available</span>
+                <span class="badge npm">NPM</span>
+                <h2>브랜드페이</h2>
+                <p>회원의 결제수단을 저장해두고 다음부터 원클릭으로 결제. 결제위젯에 user_token만 추가하면 활성화됩니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
+
+            <a href="subscription/subscription.html" class="demo-card subscription">
+                <div class="demo-icon subscription">🔄</div>
+                <span class="badge available">Available</span>
+                <span class="badge npm">NPM</span>
+                <h2>자동결제</h2>
+                <p>Bootpay.requestSubscription()으로 빌링키를 발급하고, 서버가 빌링키로 매 주기마다 자동 청구하는 정기결제 연동입니다.</p>
                 <span class="demo-btn">데모 보기</span>
             </a>
         </div>

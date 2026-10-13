@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문서 (브랜드페이) - TechMall</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: #1e293b;
+        }
+        .back-link {
+            color: #ec4899;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 32px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panels */
+        .order-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .panel-title::before {
+            content: '🛒';
+            font-size: 1.25rem;
+        }
+        .panel-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .user-info {
+            margin-bottom: 24px;
+            padding: 16px;
+            background: linear-gradient(135deg, #fdf2f8 0%, #f5f3ff 100%);
+            border-radius: 12px;
+            border: 1px solid #f9a8d4;
+        }
+        .user-info-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #be185d;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .user-info-detail {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+        .user-info-detail b {
+            color: #1e293b;
+        }
+        .token-status {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-family: 'SF Mono', Monaco, monospace;
+            word-break: break-all;
+        }
+        .token-status.ready {
+            color: #15803d;
+        }
+
+        .product-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .product-image {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #fce7f3 0%, #ddd6fe 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+        .product-info {
+            flex: 1;
+        }
+        .product-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        .product-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .product-quantity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .qty-btn:hover {
+            background: #f1f5f9;
+        }
+        .qty-value {
+            font-weight: 600;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        /* Payment Method (Widget) Section — 좌측 패널 */
+        .widget-section {
+            padding-top: 24px;
+        }
+        .widget-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .widget-title::before {
+            content: '💳';
+        }
+        .brandpay-badge {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .widget-hint {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            margin: -4px 0 16px;
+        }
+        #payment-widget-area {
+            min-height: 300px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            position: relative;
+        }
+        #payment-widget-area.loading::after {
+            content: '결제 위젯 로딩 중...';
+            color: #64748b;
+            font-size: 0.95rem;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #payment-widget-area.error {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+        #payment-widget-area.error::after {
+            content: '위젯 로딩 실패';
+            color: #dc2626;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #payment-widget-area.loaded {
+            border: none;
+            background: transparent;
+            min-height: auto;
+        }
+        #payment-widget-area.loaded::after {
+            content: none;
+        }
+
+        /* Right Panel — 최종 정보 / 약관 / 결제 */
+        .checkout-panel {
+            position: sticky;
+            top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .summary-card,
+        .terms-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Summary product line */
+        .summary-product {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .summary-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #fce7f3 0%, #ddd6fe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .summary-product-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
+        .summary-product-qty {
+            color: #64748b;
+            font-size: 0.82rem;
+            margin-top: 2px;
+        }
+
+        /* Price Summary */
+        .price-summary {
+            padding-top: 16px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .price-row.total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 2px solid #1e293b;
+        }
+
+        /* Terms Agreement */
+        .terms-all {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #1e293b;
+            cursor: pointer;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 12px;
+        }
+        .terms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .terms-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #475569;
+        }
+        .terms-item .term-text {
+            flex: 1;
+        }
+        .terms-item .req {
+            color: #ec4899;
+            font-weight: 600;
+        }
+        .terms-item .opt {
+            color: #94a3b8;
+        }
+        .term-view {
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .term-view:hover {
+            color: #ec4899;
+        }
+
+        /* Terms Modal */
+        .terms-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+        .terms-modal-overlay.show {
+            display: flex;
+        }
+        .terms-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 540px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: modal-pop 0.2s ease;
+        }
+        @keyframes modal-pop {
+            from { transform: translateY(12px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .terms-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .terms-modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .terms-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .terms-modal-close:hover {
+            color: #1e293b;
+        }
+        .terms-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        .terms-modal-body h4 {
+            color: #1e293b;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 16px 0 6px;
+        }
+        .terms-modal-body h4:first-child {
+            margin-top: 0;
+        }
+        .terms-modal-body p {
+            margin-bottom: 10px;
+            white-space: pre-line;
+        }
+        .terms-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .terms-modal-btn {
+            flex: 1;
+            padding: 13px 20px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .terms-modal-btn.secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .terms-modal-btn.secondary:hover {
+            background: #e2e8f0;
+        }
+        .terms-modal-btn.primary {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            color: white;
+        }
+        .terms-modal-btn.primary:hover {
+            opacity: 0.9;
+        }
+        .terms-card input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #ec4899;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.3);
+        }
+        .checkout-btn:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .checkout-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .checkout-btn.loading .spinner {
+            display: block;
+        }
+        .checkout-btn.loading .btn-text {
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Checkout hint (gating 안내) */
+        .checkout-hint {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .checkout-hint.ready {
+            color: #ec4899;
+            font-weight: 600;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error {
+            background: #dc2626;
+        }
+        .toast.success {
+            background: #16a34a;
+        }
+
+        .settings-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .settings-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .settings-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .settings-content {
+            display: none;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        .settings-row {
+            margin-bottom: 12px;
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .settings-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        .settings-select:focus {
+            outline: none;
+            border-color: #ec4899;
+        }
+
+        /* Bootpay Footer Styles */
+        .bootpay-footer {
+            background: #2d3748;
+            padding: 40px 0;
+            width: 100%;
+            margin-top: auto;
+        }
+        .bootpay-footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .bootpay-footer-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        .bootpay-footer-logo {
+            flex: 0 0 auto;
+        }
+        .bootpay-footer-logo img {
+            height: 24px;
+            opacity: 0.8;
+        }
+        .bootpay-footer-info {
+            flex: 1;
+            min-width: 280px;
+        }
+        .bootpay-footer-address {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .bootpay-footer-contact {
+            min-width: 150px;
+        }
+        .bootpay-footer-contact-title,
+        .bootpay-footer-links-title {
+            color: #e2e8f0;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .bootpay-footer-contact-text,
+        .bootpay-footer-links-text {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .bootpay-footer-links {
+            min-width: 150px;
+        }
+        .bootpay-footer-links-text a {
+            color: #a0aec0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .bootpay-footer-links-text a:hover {
+            color: #e2e8f0;
+        }
+        @media (max-width: 768px) {
+            .bootpay-footer-row {
+                flex-direction: column;
+                gap: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">
+            <span class="logo-icon">⚡</span>
+            TechMall
+        </a>
+        <nav class="nav-links">
+            <a href="#">신상품</a>
+            <a href="#">베스트</a>
+            <a href="#">이벤트</a>
+            <a href="#">고객센터</a>
+        </nav>
+        <a href="/" class="back-link">← 예제 목록으로</a>
+    </header>
+
+    <main class="main-content">
+        <!-- Left: 로그인 회원 + 주문 상품 + 결제수단 위젯 -->
+        <div class="order-panel">
+            <h1 class="panel-title">주문서</h1>
+            <p class="panel-subtitle">상품을 확인하고 결제 수단을 선택하세요.</p>
+
+            <div class="user-info">
+                <div class="user-info-title">👤 로그인 회원</div>
+                <div class="user-info-detail">
+                    <b id="user-name">홍길동</b> · <span id="user-email">demo@techmall.com</span>
+                </div>
+                <div class="token-status" id="token-status">user_token 발급 대기...</div>
+            </div>
+
+            <!-- Product Item -->
+            <div class="product-item">
+                <div class="product-image">⚡</div>
+                <div class="product-info">
+                    <div class="product-name">프리미엄 무선 이어폰 Pro Max</div>
+                    <div class="product-desc">노이즈 캔슬링 / 30시간 재생 / IPX5 방수</div>
+                    <div class="product-price">₩<span id="unit-price">4,000</span></div>
+                    <div class="product-quantity">
+                        <button class="qty-btn" id="qty-decrease">−</button>
+                        <span class="qty-value" id="quantity">1</span>
+                        <button class="qty-btn" id="qty-increase">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method Widget (브랜드페이) -->
+            <div class="widget-section">
+                <div class="widget-title">
+                    결제 수단
+                    <span class="brandpay-badge">Brandpay</span>
+                </div>
+                <p class="widget-hint">저장된 결제수단으로 원클릭 결제됩니다.</p>
+                <div id="payment-widget-area" class="loading"></div>
+            </div>
+        </div>
+
+        <!-- Right: 최종 정보 확인 + 약관 동의 + 결제 -->
+        <div class="checkout-panel">
+            <!-- 최종 결제 정보 -->
+            <div class="summary-card">
+                <h2 class="card-title">🧾 최종 결제 정보</h2>
+                <div class="summary-product">
+                    <div class="summary-thumb">⚡</div>
+                    <div>
+                        <div class="summary-product-name">프리미엄 무선 이어폰 Pro Max</div>
+                        <div class="summary-product-qty">수량 <span id="summary-qty">1</span>개</div>
+                    </div>
+                </div>
+                <div class="price-summary">
+                    <div class="price-row">
+                        <span>상품 금액</span>
+                        <span>₩<span id="subtotal">4,000</span></span>
+                    </div>
+                    <div class="price-row">
+                        <span>배송비</span>
+                        <span>무료</span>
+                    </div>
+                    <div class="price-row total">
+                        <span>총 결제 금액</span>
+                        <span>₩<span id="total-price">4,000</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 약관 동의 -->
+            <div class="terms-card">
+                <label class="terms-all">
+                    <input type="checkbox" id="agree-all">
+                    <span>전체 동의합니다</span>
+                </label>
+                <div class="terms-list">
+                    <label class="terms-item">
+                        <input type="checkbox" class="term-check" data-required="true" data-term="purchase">
+                        <span class="term-text"><span class="req">[필수]</span> 구매조건 확인 및 결제진행 동의</span>
+                        <button type="button" class="term-view" data-term="purchase">보기</button>
+                    </label>
+                    <label class="terms-item">
+                        <input type="checkbox" class="term-check" data-required="true" data-term="privacy">
+                        <span class="term-text"><span class="req">[필수]</span> 개인정보 수집 및 이용 동의</span>
+                        <button type="button" class="term-view" data-term="privacy">보기</button>
+                    </label>
+                    <label class="terms-item">
+                        <input type="checkbox" class="term-check" data-required="false" data-term="marketing">
+                        <span class="term-text"><span class="opt">[선택]</span> 마케팅 정보 수신 동의</span>
+                        <button type="button" class="term-view" data-term="marketing">보기</button>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 결제하기 -->
+            <button class="checkout-btn" id="checkout-btn" disabled>
+                <span class="spinner"></span>
+                <span class="btn-text">₩<span id="btn-price">4,000</span> 결제하기</span>
+            </button>
+            <p class="checkout-hint" id="checkout-hint">결제 수단 선택과 약관 동의를 완료해 주세요.</p>
+        </div>
+    </main>
+
+    <div class="settings-panel">
+        <div class="settings-header" onclick="toggleSettings()">
+            <span class="settings-title">환경 설정</span>
+            <span class="settings-toggle">▲</span>
+        </div>
+        <div class="settings-content">
+            <div class="settings-row">
+                <label class="settings-label">실행 환경</label>
+                <select class="settings-select" id="env" onchange="changeEnv()">
+                    <option value="development">Development (테스트)</option>
+                    <option value="stage">Stage</option>
+                    <option value="production" selected>Production (실서비스)</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <label class="settings-label">PG사</label>
+                <select class="settings-select" id="pg" onchange="changePg()">
+                    <option value="">기본 (자동 / 통합결제창)</option>
+                    <optgroup label="국내 일반결제">
+                        <option value="nicepay">나이스페이먼츠</option>
+                        <option value="tosspayments">토스페이먼츠</option>
+                        <option value="inicis">KG이니시스</option>
+                        <option value="kcp">NHN KCP</option>
+                        <option value="danal">다날</option>
+                        <option value="smartro">스마트로</option>
+                        <option value="welcome">웰컴페이먼츠</option>
+                        <option value="easypay">KICC 이지페이</option>
+                        <option value="payapp">페이앱</option>
+                        <option value="payletter">페이레터</option>
+                        <option value="settle">세틀뱅크</option>
+                    </optgroup>
+                    <optgroup label="간편결제">
+                        <option value="kakaopay">카카오페이</option>
+                        <option value="naverpay">네이버페이</option>
+                        <option value="payco">페이코</option>
+                        <option value="tosspay">토스페이</option>
+                        <option value="samsungpay">삼성페이</option>
+                        <option value="applepay">애플페이</option>
+                    </optgroup>
+                    <optgroup label="해외결제">
+                        <option value="eximbay">엑심베이</option>
+                        <option value="paypal">페이팔</option>
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- 약관 Modal -->
+    <div class="terms-modal-overlay" id="terms-modal">
+        <div class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+            <div class="terms-modal-header">
+                <h3 id="terms-modal-title">약관</h3>
+                <button type="button" class="terms-modal-close" id="terms-modal-close" aria-label="닫기">×</button>
+            </div>
+            <div class="terms-modal-body" id="terms-modal-body"></div>
+            <div class="terms-modal-footer">
+                <button type="button" class="terms-modal-btn secondary" id="terms-modal-cancel">닫기</button>
+                <button type="button" class="terms-modal-btn primary" id="terms-modal-agree">동의하고 닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootpay Footer -->
+    <footer class="bootpay-footer">
+        <div class="bootpay-footer-container">
+            <div class="bootpay-footer-row">
+                <div class="bootpay-footer-logo">
+                    <img src="https://www.bootpay.co.kr/assets/logo/bootpay_gray" alt="부트페이">
+                </div>
+                <div class="bootpay-footer-info">
+                    <p class="bootpay-footer-address">
+                        (주)부트페이 | 대표 정재훈<br>
+                        사업자 등록번호 618-87-00495 | 통신판매업신고번호 2022-서울구로-1854<br>
+                        서울특별시 구로구 디지털로26길 61, 1202호 | pg@bootpay.co.kr
+                    </p>
+                </div>
+                <div class="bootpay-footer-contact">
+                    <div class="bootpay-footer-contact-title">CONTACT</div>
+                    <p class="bootpay-footer-contact-text">
+                        TEL. 1599-4062<br>
+                        FAX. 02-6008-9760
+                    </p>
+                </div>
+                <div class="bootpay-footer-links">
+                    <div class="bootpay-footer-links-title">LINKS</div>
+                    <p class="bootpay-footer-links-text">
+                        <a href="https://admin.bootpay.co.kr" target="_blank">부트페이 관리자 이동</a><br>
+                        <a href="https://docs.bootpay.co.kr" target="_blank">부트페이 개발문서 이동</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="/npm/brandpay/brandpay.js"></script>
+</body>
+</html>

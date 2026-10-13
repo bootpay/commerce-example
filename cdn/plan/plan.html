@@ -75,17 +75,17 @@
         /* Hero */
         .hero {
             text-align: center;
-            padding: 64px 20px 48px;
+            padding: 56px 20px 40px;
             background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
         }
         .hero h1 {
-            font-size: 2.5rem;
+            font-size: 2.25rem;
             color: #1e293b;
             margin-bottom: 16px;
         }
         .hero p {
             color: #64748b;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             max-width: 600px;
             margin: 0 auto;
             line-height: 1.6;
@@ -97,7 +97,7 @@
             justify-content: center;
             align-items: center;
             gap: 16px;
-            margin-top: 32px;
+            margin-top: 28px;
         }
         .billing-toggle span {
             color: #64748b;
@@ -143,110 +143,156 @@
             font-weight: 600;
         }
 
-        /* Pricing Cards */
-        .pricing-section {
-            max-width: 1200px;
+        /* Main Content — 2 column */
+        .main-content {
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 48px 20px 80px;
-        }
-        .pricing-cards {
+            width: 100%;
+            padding: 40px 20px 64px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            grid-template-columns: 1fr 400px;
+            gap: 32px;
+            align-items: start;
         }
         @media (max-width: 900px) {
-            .pricing-cards {
+            .main-content {
                 grid-template-columns: 1fr;
-                max-width: 400px;
-                margin: 0 auto;
             }
         }
+
+        /* Left: 플랜 선택 패널 */
+        .plan-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .plan-panel-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+        .plan-panel-subtitle {
+            color: #64748b;
+            font-size: 0.92rem;
+            margin-bottom: 8px;
+        }
+
+        /* Plan Cards (컴팩트, 세로 리스트) */
         .pricing-card {
             background: white;
             border-radius: 16px;
-            padding: 32px;
+            padding: 24px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border: 2px solid transparent;
-            transition: all 0.3s;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
             position: relative;
+            cursor: pointer;
         }
         .pricing-card:hover {
-            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-            transform: translateY(-4px);
-        }
-        .pricing-card.popular {
-            border-color: #667eea;
-            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2);
+            border-color: #c7d2fe;
         }
         .pricing-card.selected {
             border-color: #667eea;
-            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.25);
-            transform: translateY(-4px);
-        }
-        .pricing-card.selected .select-plan-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.18);
+            background: #f5f3ff;
         }
         .popular-badge {
             position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: -11px;
+            right: 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 6px 20px;
+            padding: 5px 16px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
         }
+        .plan-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .plan-radio {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .pricing-card.selected .plan-radio {
+            border-color: #667eea;
+        }
+        .pricing-card.selected .plan-radio::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #667eea;
+        }
         .plan-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            margin-bottom: 20px;
+            font-size: 22px;
+            flex-shrink: 0;
         }
         .plan-starter .plan-icon { background: #e0f2fe; }
         .plan-pro .plan-icon { background: #ede9fe; }
         .plan-enterprise .plan-icon { background: #fef3c7; }
 
+        .plan-head-body {
+            flex: 1;
+            min-width: 0;
+        }
         .plan-name {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #1e293b;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .plan-desc {
             color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 24px;
+            font-size: 0.86rem;
             line-height: 1.5;
         }
         .plan-price {
-            margin-bottom: 24px;
-        }
-        .price-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #1e293b;
+            text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
         .price-currency {
-            font-size: 1.25rem;
+            font-size: 1rem;
             color: #64748b;
             vertical-align: top;
         }
+        .price-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
         .price-period {
             color: #94a3b8;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+        }
+        .price-sub {
+            margin-top: 4px;
+            font-size: 0.78rem;
+            color: #94a3b8;
         }
         .original-price {
             text-decoration: line-through;
             color: #94a3b8;
-            font-size: 0.9rem;
-            margin-left: 8px;
             display: none;
         }
         .original-price.show {
@@ -254,63 +300,357 @@
         }
         .discount-badge {
             display: none;
-            background: #fef2f2;
             color: #dc2626;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
             font-weight: 600;
-            margin-left: 8px;
         }
         .discount-badge.show {
-            display: inline-block;
+            display: inline;
         }
 
         .plan-features {
             list-style: none;
-            margin-bottom: 32px;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid #f1f5f9;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+        @media (max-width: 560px) {
+            .plan-features {
+                grid-template-columns: 1fr;
+            }
         }
         .plan-features li {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            padding: 10px 0;
+            gap: 8px;
             color: #475569;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .plan-features li::before {
             content: '✓';
-            color: #22c55e;
+            color: #667eea;
             font-weight: 700;
             flex-shrink: 0;
         }
 
-        .select-plan-btn {
-            width: 100%;
-            padding: 14px 24px;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
+        /* Right Panel — 구독 요약 / 약관 / 구독하기 */
+        .checkout-panel {
+            position: sticky;
+            top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
-        .plan-starter .select-plan-btn,
-        .plan-enterprise .select-plan-btn {
+        .summary-card,
+        .terms-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Summary rows */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 2px solid #1e293b;
+        }
+        .summary-row.total .cycle {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .summary-helper {
+            font-size: 0.8rem;
+            color: #64748b;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px 12px;
+            line-height: 1.5;
+            margin-top: 16px;
+        }
+        /* Enterprise 안내 (영업팀 문의) */
+        .enterprise-note {
+            display: none;
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #92400e;
+            line-height: 1.6;
+        }
+        .summary-card.enterprise .enterprise-note {
+            display: block;
+        }
+
+        /* Terms Agreement */
+        .terms-all {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #1e293b;
+            cursor: pointer;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 12px;
+        }
+        .terms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .terms-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #475569;
+        }
+        .terms-item .term-text {
+            flex: 1;
+        }
+        .terms-item .req {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .terms-item .opt {
+            color: #94a3b8;
+        }
+        .term-view {
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .term-view:hover {
+            color: #667eea;
+        }
+        .terms-card input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Terms Modal */
+        .terms-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+        .terms-modal-overlay.show {
+            display: flex;
+        }
+        .terms-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 540px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: modal-pop 0.2s ease;
+        }
+        @keyframes modal-pop {
+            from { transform: translateY(12px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .terms-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .terms-modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .terms-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .terms-modal-close:hover {
+            color: #1e293b;
+        }
+        .terms-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        .terms-modal-body h4 {
+            color: #1e293b;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 16px 0 6px;
+        }
+        .terms-modal-body h4:first-child {
+            margin-top: 0;
+        }
+        .terms-modal-body p {
+            margin-bottom: 10px;
+            white-space: pre-line;
+        }
+        .terms-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .terms-modal-btn {
+            flex: 1;
+            padding: 13px 20px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .terms-modal-btn.secondary {
             background: #f1f5f9;
             color: #475569;
         }
-        .plan-starter .select-plan-btn:hover,
-        .plan-enterprise .select-plan-btn:hover {
+        .terms-modal-btn.secondary:hover {
             background: #e2e8f0;
         }
-        .plan-pro .select-plan-btn {
+        .terms-modal-btn.primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        .plan-pro .select-plan-btn:hover {
+        .terms-modal-btn.primary:hover {
             opacity: 0.9;
-            transform: scale(1.02);
+        }
+
+        /* Checkout Button */
+        .checkout-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        .checkout-btn:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .checkout-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .checkout-btn.loading .spinner {
+            display: block;
+        }
+        .checkout-btn.loading .btn-text {
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Checkout hint (gating 안내) */
+        .checkout-hint {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .checkout-hint.ready {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Toast Message */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error {
+            background: #dc2626;
+        }
+        .toast.success {
+            background: #16a34a;
         }
 
         /* Loading overlay */
@@ -322,7 +662,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            z-index: 1500;
             justify-content: center;
             align-items: center;
         }
@@ -336,9 +676,6 @@
             border-top-color: #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         /* Settings Panel */
@@ -496,19 +833,34 @@
         </div>
     </section>
 
-    <section class="pricing-section">
-        <div class="pricing-cards">
+    <main class="main-content">
+        <!-- Left: 요금제 선택 -->
+        <div class="plan-panel">
+            <div>
+                <div class="plan-panel-title">요금제 선택</div>
+                <div class="plan-panel-subtitle">원하는 요금제를 선택하면 오른쪽에서 구독 내용을 확인할 수 있습니다.</div>
+            </div>
+
             <!-- Starter Plan -->
             <div class="pricing-card plan-starter" data-plan="starter" onclick="focusPlan('starter')">
-                <div class="plan-icon">🚀</div>
-                <div class="plan-name">Starter</div>
-                <p class="plan-desc">개인 사용자 및 소규모 프로젝트에 적합한 기본 요금제</p>
-                <div class="plan-price">
-                    <span class="price-currency">₩</span>
-                    <span class="price-value" data-monthly="9,900" data-yearly="7,900">9,900</span>
-                    <span class="price-period">/월</span>
-                    <span class="original-price" data-monthly="₩9,900">₩9,900</span>
-                    <span class="discount-badge">-20%</span>
+                <div class="plan-head">
+                    <div class="plan-radio"></div>
+                    <div class="plan-icon">🚀</div>
+                    <div class="plan-head-body">
+                        <div class="plan-name">Starter</div>
+                        <p class="plan-desc">개인 사용자 및 소규모 프로젝트에 적합한 기본 요금제</p>
+                    </div>
+                    <div class="plan-price">
+                        <div>
+                            <span class="price-currency">₩</span>
+                            <span class="price-value" data-monthly="9,900" data-yearly="7,900">9,900</span>
+                            <span class="price-period">/월</span>
+                        </div>
+                        <div class="price-sub">
+                            <span class="original-price" data-monthly="₩9,900">₩9,900</span>
+                            <span class="discount-badge">20% 할인</span>
+                        </div>
+                    </div>
                 </div>
                 <ul class="plan-features">
                     <li>5GB 클라우드 스토리지</li>
@@ -517,21 +869,29 @@
                     <li>이메일 지원</li>
                     <li>SSL 보안 인증서</li>
                 </ul>
-                <button class="select-plan-btn" onclick="event.stopPropagation(); selectPlan('starter')">Starter 시작하기</button>
             </div>
 
             <!-- Pro Plan -->
             <div class="pricing-card plan-pro" data-plan="pro" onclick="focusPlan('pro')">
                 <span class="popular-badge">가장 인기</span>
-                <div class="plan-icon">⚡</div>
-                <div class="plan-name">Professional</div>
-                <p class="plan-desc">성장하는 팀과 비즈니스를 위한 완벽한 솔루션</p>
-                <div class="plan-price">
-                    <span class="price-currency">₩</span>
-                    <span class="price-value" data-monthly="29,900" data-yearly="23,900">29,900</span>
-                    <span class="price-period">/월</span>
-                    <span class="original-price" data-monthly="₩29,900">₩29,900</span>
-                    <span class="discount-badge">-20%</span>
+                <div class="plan-head">
+                    <div class="plan-radio"></div>
+                    <div class="plan-icon">⚡</div>
+                    <div class="plan-head-body">
+                        <div class="plan-name">Professional</div>
+                        <p class="plan-desc">성장하는 팀과 비즈니스를 위한 완벽한 솔루션</p>
+                    </div>
+                    <div class="plan-price">
+                        <div>
+                            <span class="price-currency">₩</span>
+                            <span class="price-value" data-monthly="29,900" data-yearly="23,900">29,900</span>
+                            <span class="price-period">/월</span>
+                        </div>
+                        <div class="price-sub">
+                            <span class="original-price" data-monthly="₩29,900">₩29,900</span>
+                            <span class="discount-badge">20% 할인</span>
+                        </div>
+                    </div>
                 </div>
                 <ul class="plan-features">
                     <li>100GB 클라우드 스토리지</li>
@@ -542,20 +902,28 @@
                     <li>API 접근 권한</li>
                     <li>커스텀 도메인 연결</li>
                 </ul>
-                <button class="select-plan-btn" onclick="event.stopPropagation(); selectPlan('pro')">Professional 시작하기</button>
             </div>
 
             <!-- Enterprise Plan -->
             <div class="pricing-card plan-enterprise" data-plan="enterprise" onclick="focusPlan('enterprise')">
-                <div class="plan-icon">🏢</div>
-                <div class="plan-name">Enterprise</div>
-                <p class="plan-desc">대규모 조직을 위한 맞춤형 엔터프라이즈 솔루션</p>
-                <div class="plan-price">
-                    <span class="price-currency">₩</span>
-                    <span class="price-value" data-monthly="99,000" data-yearly="79,000">99,000</span>
-                    <span class="price-period">/월</span>
-                    <span class="original-price" data-monthly="₩99,000">₩99,000</span>
-                    <span class="discount-badge">-20%</span>
+                <div class="plan-head">
+                    <div class="plan-radio"></div>
+                    <div class="plan-icon">🏢</div>
+                    <div class="plan-head-body">
+                        <div class="plan-name">Enterprise</div>
+                        <p class="plan-desc">대규모 조직을 위한 맞춤형 엔터프라이즈 솔루션</p>
+                    </div>
+                    <div class="plan-price">
+                        <div>
+                            <span class="price-currency">₩</span>
+                            <span class="price-value" data-monthly="99,000" data-yearly="79,000">99,000</span>
+                            <span class="price-period">/월</span>
+                        </div>
+                        <div class="price-sub">
+                            <span class="original-price" data-monthly="₩99,000">₩99,000</span>
+                            <span class="discount-badge">20% 할인</span>
+                        </div>
+                    </div>
                 </div>
                 <ul class="plan-features">
                     <li>무제한 클라우드 스토리지</li>
@@ -567,10 +935,68 @@
                     <li>맞춤형 온보딩</li>
                     <li>감사 로그</li>
                 </ul>
-                <button class="select-plan-btn" onclick="event.stopPropagation(); selectPlan('enterprise')">영업팀 문의</button>
             </div>
         </div>
-    </section>
+
+        <!-- Right: 구독 요약 + 약관 동의 + 구독하기 -->
+        <div class="checkout-panel">
+            <!-- 구독 요약 -->
+            <div class="summary-card" id="summary-card">
+                <h2 class="card-title">🧾 구독 요약</h2>
+                <div class="summary-row">
+                    <span>선택한 플랜</span>
+                    <span id="summary-plan">Professional</span>
+                </div>
+                <div class="summary-row">
+                    <span>결제 주기</span>
+                    <span id="summary-cycle">월간</span>
+                </div>
+                <div class="summary-row total">
+                    <span id="summary-total-label">월 결제 금액</span>
+                    <span>₩<span id="summary-price">29,900</span> <span class="cycle" id="summary-price-cycle">/ 월</span></span>
+                </div>
+                <div class="summary-helper" id="summary-helper">
+                    "구독하기"를 누르면 결제 창이 열립니다. 선택한 플랜과 결제 주기 기준으로 청구서가 생성됩니다.
+                </div>
+                <div class="enterprise-note" id="enterprise-note">
+                    Enterprise 플랜은 맞춤형 견적이 필요합니다. 아래 "영업팀 문의"를 눌러 상담을 요청해 주세요.<br>
+                    이메일: sales@cloudsync.example.com
+                </div>
+            </div>
+
+            <!-- 약관 동의 -->
+            <div class="terms-card">
+                <label class="terms-all">
+                    <input type="checkbox" id="agree-all">
+                    <span>전체 동의합니다</span>
+                </label>
+                <div class="terms-list">
+                    <label class="terms-item">
+                        <input type="checkbox" class="term-check" data-required="true" data-term="purchase">
+                        <span class="term-text"><span class="req">[필수]</span> 구독조건 확인 및 결제진행 동의</span>
+                        <button type="button" class="term-view" data-term="purchase">보기</button>
+                    </label>
+                    <label class="terms-item">
+                        <input type="checkbox" class="term-check" data-required="true" data-term="privacy">
+                        <span class="term-text"><span class="req">[필수]</span> 개인정보 수집 및 이용 동의</span>
+                        <button type="button" class="term-view" data-term="privacy">보기</button>
+                    </label>
+                    <label class="terms-item">
+                        <input type="checkbox" class="term-check" data-required="false" data-term="marketing">
+                        <span class="term-text"><span class="opt">[선택]</span> 마케팅 정보 수신 동의</span>
+                        <button type="button" class="term-view" data-term="marketing">보기</button>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 구독하기 -->
+            <button class="checkout-btn" id="checkout-btn" disabled>
+                <span class="spinner"></span>
+                <span class="btn-text">구독하기</span>
+            </button>
+            <p class="checkout-hint" id="checkout-hint">필수 약관에 동의해 주세요.</p>
+        </div>
+    </main>
 
     <!-- Settings Panel -->
     <div class="settings-panel">
@@ -586,6 +1012,55 @@
                     <option value="stage">Stage</option>
                     <option value="production" selected>Production (실서비스)</option>
                 </select>
+            </div>
+            <div class="settings-row">
+                <label class="settings-label">PG사</label>
+                <select class="settings-select" id="pg" onchange="changePg()">
+                    <option value="">기본 (자동 / 통합결제창)</option>
+                    <optgroup label="국내 일반결제">
+                        <option value="nicepay">나이스페이먼츠</option>
+                        <option value="tosspayments">토스페이먼츠</option>
+                        <option value="inicis">KG이니시스</option>
+                        <option value="kcp">NHN KCP</option>
+                        <option value="danal">다날</option>
+                        <option value="smartro">스마트로</option>
+                        <option value="welcome">웰컴페이먼츠</option>
+                        <option value="easypay">KICC 이지페이</option>
+                        <option value="payapp">페이앱</option>
+                        <option value="payletter">페이레터</option>
+                        <option value="settle">세틀뱅크</option>
+                    </optgroup>
+                    <optgroup label="간편결제">
+                        <option value="kakaopay">카카오페이</option>
+                        <option value="naverpay">네이버페이</option>
+                        <option value="payco">페이코</option>
+                        <option value="tosspay">토스페이</option>
+                        <option value="samsungpay">삼성페이</option>
+                        <option value="applepay">애플페이</option>
+                    </optgroup>
+                    <optgroup label="해외결제">
+                        <option value="eximbay">엑심베이</option>
+                        <option value="paypal">페이팔</option>
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 약관 Modal -->
+    <div class="terms-modal-overlay" id="terms-modal">
+        <div class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+            <div class="terms-modal-header">
+                <h3 id="terms-modal-title">약관</h3>
+                <button type="button" class="terms-modal-close" id="terms-modal-close" aria-label="닫기">×</button>
+            </div>
+            <div class="terms-modal-body" id="terms-modal-body"></div>
+            <div class="terms-modal-footer">
+                <button type="button" class="terms-modal-btn secondary" id="terms-modal-cancel">닫기</button>
+                <button type="button" class="terms-modal-btn primary" id="terms-modal-agree">동의하고 닫기</button>
             </div>
         </div>
     </div>
@@ -655,9 +1130,58 @@
         // 현재 결제 주기 상태 (월간/연간)
         let isYearlyBilling = false
 
+        // 현재 선택된 플랜 (항상 하나는 선택되어 있음)
+        let selectedPlanKey = 'pro'
+
         // 현재 환경 (localhost면 development, 아니면 production)
         const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         let currentEnv = isLocalDev ? 'development' : 'production'
+
+        // 현재 PG (빈 값이면 미적용 = 자동)
+        let currentPg = ''
+
+        // 게이팅 상태 — 요금제는 항상 선택되어 있으므로 methodCompleted = true 고정,
+        // 약관(termsCompleted)만으로 구독하기 버튼 활성화
+        let methodCompleted = true
+        let termsCompleted = false
+
+        // ========================================
+        // 약관 전문 (데모용 샘플 — 실제 서비스에서는 법무 검토 문구로 교체)
+        // ========================================
+        const TERMS = {
+            purchase: {
+                title: '구독조건 확인 및 결제진행 동의',
+                sections: [
+                    { h: '제1조 (목적)', p: '본 약관은 회원이 CloudSync Pro(이하 "회사")의 요금제를 구독하고 정기결제를 진행함에 있어 필요한 구독조건 및 결제대행 서비스 이용에 관한 사항을 규정합니다.' },
+                    { h: '제2조 (구독 및 결제)', p: '① 회원은 선택한 요금제의 명칭, 결제 주기(월간/연간), 결제 금액을 확인한 후 구독을 진행합니다.\n② 결제는 부트페이(Bootpay) 결제대행 서비스를 통해 처리되며, 회원은 결제수단 정보를 정확히 입력해야 합니다.\n③ 결제 금액은 회사 서버에서 최종 검증되며, 위·변조된 금액으로의 결제는 무효 처리될 수 있습니다.' },
+                    { h: '제3조 (구독 갱신 및 해지)', p: '구독은 해지 전까지 선택한 주기마다 자동으로 갱신·청구됩니다. 회원은 언제든지 구독을 해지할 수 있으며, 해지 시 잔여 이용 기간 및 환불 정책은 회사의 정책에 따릅니다.' },
+                    { h: '제4조 (청약철회 및 환불)', p: '회원은 관련 법령에 따라 청약철회를 요청할 수 있으며, 환불은 회사의 환불 정책 및 결제수단별 처리 절차에 따라 진행됩니다.' },
+                    { h: '동의 확인', p: '본인은 위 구독조건을 확인하였으며 결제 진행에 동의합니다.' }
+                ]
+            },
+            privacy: {
+                title: '개인정보 수집 및 이용 동의',
+                sections: [
+                    { h: '1. 수집 항목', p: '이름, 연락처(휴대전화번호), 이메일 주소, 결제수단 정보, 구독 및 결제 내역' },
+                    { h: '2. 수집 및 이용 목적', p: '본인확인, 구독 신청 및 서비스 제공, 결제 및 결제대행 처리, 고객 문의 대응, 해지·환불 처리' },
+                    { h: '3. 보유 및 이용 기간', p: '전자상거래 등에서의 소비자보호에 관한 법률 등 관련 법령에 따라 거래기록은 5년간 보관하며, 보유 목적 달성 시 지체 없이 파기합니다.' },
+                    { h: '4. 동의 거부 권리 및 불이익', p: '회원은 개인정보 수집·이용 동의를 거부할 수 있습니다. 다만 필수 항목에 동의하지 않을 경우 구독 및 결제 서비스 이용이 제한됩니다.' },
+                    { h: '동의 확인', p: '본인은 위 내용을 확인하였으며 개인정보 수집·이용에 동의합니다.' }
+                ]
+            },
+            marketing: {
+                title: '마케팅 정보 수신 동의 (선택)',
+                sections: [
+                    { h: '1. 수집 및 이용 목적', p: '신규 기능 안내, 할인·프로모션 및 이벤트 정보 제공, 맞춤형 혜택 및 광고 안내' },
+                    { h: '2. 발송 채널', p: '이메일, SMS/MMS, 앱 푸시 알림' },
+                    { h: '3. 보유 및 이용 기간', p: '수신 동의 철회 시 또는 회원 탈퇴 시까지' },
+                    { h: '4. 선택 동의 안내', p: '본 동의는 선택 사항이며, 동의하지 않아도 구독 및 결제 이용에는 제한이 없습니다. 동의 후에도 언제든지 수신을 거부할 수 있습니다.' },
+                    { h: '동의 확인', p: '본인은 위 내용을 확인하였으며 마케팅 정보 수신에 동의합니다. (선택)' }
+                ]
+            }
+        }
+
+        let activeTermKey = null  // 현재 modal에 표시 중인 약관 키
 
         // 현재 환경의 설정 가져오기
         function getCurrentConfig() {
@@ -686,10 +1210,24 @@
                 envSelect.value = currentEnv
             }
 
+            // PG 복원
+            currentPg = localStorage.getItem('bootpay_pg') || ''
+            const pgSelect = document.getElementById('pg')
+            if (pgSelect) {
+                pgSelect.value = currentPg
+            }
+
             // Commerce SDK 환경 설정 (CDN에서 로드된 전역 객체 사용)
             BootpayCommerce.setEnvironmentMode(currentEnv)
 
             console.log(`[Commerce CDN] 환경: ${currentEnv}, Client Key: ${getCurrentConfig().client_key}`)
+
+            // 기본 선택 플랜 표시 + 약관/구독 버튼 바인딩
+            focusPlan(selectedPlanKey)
+            bindTermsListeners()
+            bindTermsModal()
+            document.getElementById('checkout-btn')?.addEventListener('click', requestCheckout)
+            updateCheckoutButton()
         })
 
         // 환경 변경
@@ -711,7 +1249,15 @@
                 stage: 'Stage',
                 production: 'Production (실서비스)'
             }
-            alert(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다.`)
+            showToast(`환경이 ${envNames[currentEnv]}(으)로 변경되었습니다.`)
+        }
+
+        // PG 변경
+        function changePg() {
+            const pgSelect = document.getElementById('pg')
+            currentPg = pgSelect.value
+            localStorage.setItem('bootpay_pg', currentPg)
+            console.log(`[Commerce CDN] PG 변경: ${currentPg || '기본 (자동)'}`)
         }
 
         // 결제 주기 토글 (월간/연간)
@@ -755,10 +1301,16 @@
                     el.classList.remove('show')
                 }
             })
+
+            // 우측 요약 갱신
+            updateSummary()
         }
 
-        // 플랜 포커스 (선택 상태 표시)
+        // 플랜 선택 (좌측 카드 → 우측 요약 갱신)
         function focusPlan(planKey) {
+            if (!PLAN_INFO[planKey]) return
+            selectedPlanKey = planKey
+
             // 모든 카드에서 selected 클래스 제거
             document.querySelectorAll('.pricing-card').forEach(card => {
                 card.classList.remove('selected')
@@ -769,6 +1321,37 @@
             if (selectedCard) {
                 selectedCard.classList.add('selected')
             }
+
+            updateSummary()
+        }
+
+        // 우측 구독 요약 갱신
+        function updateSummary() {
+            const plan = PLAN_INFO[selectedPlanKey]
+            if (!plan) return
+
+            const isEnterprise = selectedPlanKey === 'enterprise'
+            const billingType = isYearlyBilling ? '연간' : '월간'
+            const price = isYearlyBilling ? plan.yearly_price : plan.monthly_price
+
+            document.getElementById('summary-plan').textContent = plan.name
+            document.getElementById('summary-cycle').textContent = billingType
+            document.getElementById('summary-total-label').textContent = isYearlyBilling ? '연간 환산 월 금액' : '월 결제 금액'
+            document.getElementById('summary-price').textContent = price.toLocaleString()
+            document.getElementById('summary-price-cycle').textContent = '/ 월'
+
+            // Enterprise 안내 표시 / 구독하기 버튼 텍스트 전환
+            const summaryCard = document.getElementById('summary-card')
+            const btnText = document.querySelector('#checkout-btn .btn-text')
+            if (isEnterprise) {
+                summaryCard.classList.add('enterprise')
+                if (btnText) btnText.textContent = '영업팀 문의'
+            } else {
+                summaryCard.classList.remove('enterprise')
+                if (btnText) btnText.textContent = '구독하기'
+            }
+
+            updateCheckoutButton()
         }
 
         // 설정 패널 토글
@@ -779,11 +1362,145 @@
             toggle.textContent = content.classList.contains('show') ? '▼' : '▲'
         }
 
-        // 플랜 선택 및 결제 요청
-        async function selectPlan(planKey) {
+        // ========================================
+        // 약관 동의 (우측 패널)
+        // ========================================
+
+        function bindTermsListeners() {
+            const agreeAll = document.getElementById('agree-all')
+            const termChecks = document.querySelectorAll('.term-check')
+
+            // 전체 동의 토글
+            agreeAll?.addEventListener('change', function() {
+                termChecks.forEach(cb => { cb.checked = this.checked })
+                updateTermsState()
+            })
+
+            // 개별 약관 변경 → 상태 갱신
+            termChecks.forEach(cb => {
+                cb.addEventListener('change', updateTermsState)
+            })
+        }
+
+        // 필수 약관이 모두 체크되면 termsCompleted = true
+        function updateTermsState() {
+            const requiredChecks = document.querySelectorAll('.term-check[data-required="true"]')
+            termsCompleted = Array.from(requiredChecks).every(cb => cb.checked)
+
+            // 전체 동의 체크박스 동기화
+            const agreeAll = document.getElementById('agree-all')
+            const termChecks = document.querySelectorAll('.term-check')
+            if (agreeAll) agreeAll.checked = Array.from(termChecks).every(c => c.checked)
+
+            updateCheckoutButton()
+        }
+
+        // ========================================
+        // 약관 Modal — '보기' 클릭 시 약관 전문 표시
+        // ========================================
+
+        function bindTermsModal() {
+            // 각 약관의 '보기' 버튼
+            document.querySelectorAll('.term-view').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault()
+                    e.stopPropagation()  // label 클릭으로 체크박스가 토글되지 않도록
+                    openTermsModal(this.dataset.term)
+                })
+            })
+
+            // 닫기 (×, 닫기 버튼, 오버레이 클릭)
+            document.getElementById('terms-modal-close')?.addEventListener('click', closeTermsModal)
+            document.getElementById('terms-modal-cancel')?.addEventListener('click', closeTermsModal)
+            document.getElementById('terms-modal')?.addEventListener('click', function(e) {
+                if (e.target === this) closeTermsModal()
+            })
+
+            // '동의하고 닫기' → 해당 약관 체크 + 닫기
+            document.getElementById('terms-modal-agree')?.addEventListener('click', function() {
+                if (activeTermKey) {
+                    const cb = document.querySelector(`.term-check[data-term="${activeTermKey}"]`)
+                    if (cb) {
+                        cb.checked = true
+                        updateTermsState()
+                    }
+                }
+                closeTermsModal()
+            })
+
+            // ESC 로 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeTermsModal()
+            })
+        }
+
+        function openTermsModal(key) {
+            const term = TERMS[key]
+            if (!term) return
+            activeTermKey = key
+
+            document.getElementById('terms-modal-title').textContent = term.title
+            document.getElementById('terms-modal-body').innerHTML = term.sections
+                .map(s => `<h4>${escapeHtml(s.h)}</h4><p>${escapeHtml(s.p)}</p>`)
+                .join('')
+
+            document.getElementById('terms-modal').classList.add('show')
+        }
+
+        function closeTermsModal() {
+            document.getElementById('terms-modal')?.classList.remove('show')
+            activeTermKey = null
+        }
+
+        // HTML 이스케이프 (약관 본문 안전 렌더링)
+        function escapeHtml(text) {
+            const div = document.createElement('div')
+            div.textContent = text
+            return div.innerHTML
+        }
+
+        // ========================================
+        // 구독하기 버튼 활성화 제어 (약관 동의만으로 게이팅)
+        // ========================================
+
+        function updateCheckoutButton() {
+            const btn = document.getElementById('checkout-btn')
+            const hint = document.getElementById('checkout-hint')
+            if (!btn) return
+
+            const isEnterprise = selectedPlanKey === 'enterprise'
+
+            // Enterprise는 영업팀 문의 — 약관과 무관하게 항상 활성화
+            if (isEnterprise) {
+                btn.disabled = false
+                if (hint) {
+                    hint.textContent = 'Enterprise는 영업팀 상담으로 진행됩니다.'
+                    hint.classList.remove('ready')
+                }
+                return
+            }
+
+            const ready = methodCompleted && termsCompleted
+            btn.disabled = !ready
+
+            if (!hint) return
+            if (ready) {
+                hint.textContent = '구독 준비가 완료되었습니다.'
+                hint.classList.add('ready')
+            } else {
+                hint.textContent = '필수 약관에 동의해 주세요.'
+                hint.classList.remove('ready')
+            }
+        }
+
+        // ========================================
+        // 구독 요청 (현재 선택된 플랜 + 결제 주기 기준)
+        // ========================================
+        async function requestCheckout() {
+            const planKey = selectedPlanKey
             const plan = PLAN_INFO[planKey]
             if (!plan) {
-                alert('알 수 없는 요금제입니다.')
+                showToast('알 수 없는 요금제입니다.', 'error')
                 return
             }
 
@@ -793,11 +1510,20 @@
                 return
             }
 
+            if (!termsCompleted) {
+                showToast('필수 약관에 동의해 주세요.', 'error')
+                return
+            }
+
+            const checkoutBtn = document.getElementById('checkout-btn')
+            checkoutBtn.classList.add('loading')
+            checkoutBtn.disabled = true
+
             const config = getCurrentConfig()
             const billingType = isYearlyBilling ? '연간' : '월간'
             const productId = getProductId(planKey, isYearlyBilling)
 
-            console.log(`[결제 요청 CDN] 환경: ${currentEnv}, 플랜: ${planKey}, 상품ID: ${productId}`)
+            console.log(`[결제 요청 CDN] 환경: ${currentEnv}, 플랜: ${planKey}, 상품ID: ${productId}, PG: ${currentPg || '기본'}`)
 
             try {
                 // ========================================
@@ -829,7 +1555,7 @@
                 // ========================================
                 BootpayCommerce.setLogLevel(1)
 
-                const response = await BootpayCommerce.requestCheckout({
+                const payload = {
                     client_key: config.client_key,
                     name: `CloudSync Pro ${plan.name} 플랜`,
                     memo: `${billingType} 구독 결제`,
@@ -866,7 +1592,12 @@
                         separately_confirmed: false,
                         create_order_immediately: true
                     }
-                })
+                }
+
+                // PG 지정 (비어있으면 자동)
+                if (currentPg) payload.pg = currentPg
+
+                const response = await BootpayCommerce.requestCheckout(payload)
 
                 console.log('Invoice Response:', response)
 
@@ -888,17 +1619,30 @@
                     console.log('검증 결과:', verifyResult)
 
                     if (!verifyResult.success) {
-                        alert(`결제 검증 실패: ${verifyResult.message}`)
+                        showToast(`결제 검증 실패: ${verifyResult.message}`, 'error')
                         return
                     }
                 }
 
-                alert(`${plan.name} 플랜 구독 요청이 완료되었습니다!\n\n콘솔에서 상세 응답을 확인하세요.`)
+                showToast(`${plan.name} 플랜 구독 요청이 완료되었습니다!`, 'success')
 
             } catch (error) {
                 console.error('Invoice Error:', error)
-                alert('구독 요청 중 오류가 발생했습니다:\n' + error.message)
+                showToast('구독 요청 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'), 'error')
+            } finally {
+                checkoutBtn.classList.remove('loading')
+                updateCheckoutButton()
             }
+        }
+
+        // ========================================
+        // Toast 메시지
+        // ========================================
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast')
+            toast.textContent = message
+            toast.className = 'toast show ' + type
+            setTimeout(() => { toast.className = 'toast' }, 3000)
         }
     </script>
 

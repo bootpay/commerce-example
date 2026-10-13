@@ -455,7 +455,7 @@
         // 현재 환경 가져오기 (localStorage 또는 URL 파라미터)
         function getCurrentEnv() {
             const params = new URLSearchParams(window.location.search);
-            return params.get('env') || localStorage.getItem('bootpay_widget_env') || 'production';
+            return params.get('env') || localStorage.getItem('bootpay_env') || 'production';
         }
 
         // 결제 조회 API 호출
@@ -558,9 +558,11 @@
                 `;
             }
 
-            // 가상계좌
+            // 가상계좌 — 입금 계좌 정보 (어디로 / 얼마를 / 언제까지 입금)
             if (data.vbank_data && data.method_symbol === 'vbank') {
                 const vbank = data.vbank_data;
+                const sectionTitle = section.querySelector('h3');
+                if (sectionTitle) sectionTitle.textContent = '입금 계좌 정보';
                 html = `
                     <div class="card-info">
                         <div class="card-icon">BANK</div>
@@ -572,6 +574,10 @@
                     <div class="detail-row">
                         <span class="detail-label">예금주</span>
                         <span class="detail-value">${vbank.bank_username || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">입금금액</span>
+                        <span class="detail-value highlight">₩${Number(data.price || 0).toLocaleString()}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">입금기한</span>
@@ -632,9 +638,13 @@
 
             // 결제 상태 판단
             // status: 0=대기, 1=완료, 2=승인대기, 3=취소, 4=오류, 5=환불, 20=가상계좌대기
-            const isSuccess = serverStatus === 1 || urlStatus === '1' || urlStatus === 'done';
+            // 가상계좌 발급(입금 대기): 서버 status 20, 또는 서버 조회 실패 시 URL status('20'/'issued')로 폴백
+            const isVbankPending = (serverStatus === 20 && !serverData?.cancelled_price)
+                || (!serverData && (urlStatus === '20' || urlStatus === 'issued'));
+            // 결제 완료는 가상계좌 발급이 아닐 때만. 서버 데이터가 있으면 서버 status 우선, 없을 때만 URL status 폴백
+            const isSuccess = !isVbankPending
+                && (serverStatus === 1 || (!serverData && (urlStatus === '1' || urlStatus === 'done')));
             const isCancelled = serverStatus === 3 || serverStatus === 5 || serverStatus === 20;
-            const isVbankPending = serverStatus === 20 && !serverData?.cancelled_price;
             const isPending = serverStatus === 0 || serverStatus === 2;
 
             if (isSuccess) {
@@ -649,9 +659,9 @@
                 message.textContent = serverData?.status_locale || '결제가 취소되었습니다.';
             } else if (isVbankPending) {
                 icon.className = 'result-icon pending';
-                iconEmoji.textContent = '!';
-                title.textContent = '입금 대기 중입니다';
-                message.textContent = '가상계좌로 입금해 주시면 결제가 완료됩니다.';
+                iconEmoji.textContent = '🏦';
+                title.textContent = '가상계좌가 발급되었습니다';
+                message.textContent = '아래 계좌로 입금기한 내에 입금해 주시면 결제가 완료됩니다.';
             } else if (isPending) {
                 icon.className = 'result-icon pending';
                 iconEmoji.textContent = '!';

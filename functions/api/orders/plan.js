@@ -1,5 +1,7 @@
 // Cloudflare Pages Functions - /api/orders/plan
 
+import { saveOrder } from '../../_shared/demo-store.js'
+
 // 환경별 상품 정보
 const ENV_PRODUCTS = {
     development: {
@@ -42,7 +44,7 @@ export async function onRequestOptions() {
 export async function onRequestPost(context) {
     try {
         const body = await context.request.json()
-        const { product_id, plan_key, billing_type, env = 'production' } = body
+        const { product_id, plan_key, billing_type, env = 'production', user_id } = body
 
         const products = getProducts(env)
         const product = products[product_id]
@@ -55,6 +57,17 @@ export async function onRequestPost(context) {
         }
 
         const orderId = 'PLAN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+        saveOrder({
+            order_id: orderId,
+            product_id,
+            product_name: product.name,
+            plan_key,
+            billing_type,
+            total_price: product.price,
+            user_id: user_id || null,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        })
 
         return new Response(JSON.stringify({
             success: true,

@@ -19,13 +19,13 @@ window.BOOTPAY_CONFIG = {
     // ========================================
     widget: {
         development: {
-            application_id: 'YOUR_DEV_APPLICATION_ID'  // 테스트용 Application ID
+            client_key: 'YOUR_DEV_CLIENT_KEY'  // 테스트용 Client Key
         },
         stage: {
-            application_id: 'YOUR_STAGE_APPLICATION_ID'  // 스테이징 Application ID
+            client_key: 'YOUR_STAGE_CLIENT_KEY'  // 스테이징 Client Key
         },
         production: {
-            application_id: 'YOUR_PROD_APPLICATION_ID'  // 실서비스 Application ID
+            client_key: 'YOUR_PROD_CLIENT_KEY'  // 실서비스 Client Key
         }
     },
 
@@ -83,6 +83,37 @@ window.BOOTPAY_CONFIG = {
                     yearly_product_id: 'YOUR_ENTERPRISE_YEARLY_PRODUCT_ID'
                 }
             }
+        }
+    },
+
+    // ========================================
+    // Integrated (통합결제) 예제 설정
+    // ========================================
+    integrated: {
+        development: {
+            client_key: 'YOUR_DEV_CLIENT_KEY'
+        },
+        stage: {
+            client_key: 'YOUR_STAGE_CLIENT_KEY'
+        },
+        production: {
+            client_key: 'YOUR_PROD_CLIENT_KEY'
+        }
+    },
+
+    // ========================================
+    // Subscription (자동결제/정기결제) 예제 설정
+    // requestSubscription 은 client_key 사용 (통합결제와 동일)
+    // ========================================
+    subscription: {
+        development: {
+            client_key: 'YOUR_DEV_CLIENT_KEY'
+        },
+        stage: {
+            client_key: 'YOUR_STAGE_CLIENT_KEY'
+        },
+        production: {
+            client_key: 'YOUR_PROD_CLIENT_KEY'
         }
     },
 

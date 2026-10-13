@@ -28,6 +28,7 @@ npm run dev
 | Widget (결제 위젯) | http://localhost:8788/npm/widget/widget.html |
 | Plan (구독 결제) | http://localhost:8788/npm/plan/plan.html |
 | Payment Link (결제링크) | http://localhost:8788/npm/payment-link/payment-link.html |
+| Subscription (자동결제/빌링키) | http://localhost:8788/npm/subscription/subscription.html |
 
 ### CDN 버전 (스크립트 태그)
 | 예제 | URL |
@@ -35,6 +36,7 @@ npm run dev
 | Widget (결제 위젯) | http://localhost:8788/cdn/widget/widget.html |
 | Plan (구독 결제) | http://localhost:8788/cdn/plan/plan.html |
 | Payment Link (결제링크) | http://localhost:8788/cdn/payment-link/payment-link.html |
+| Subscription (자동결제/빌링키) | http://localhost:8788/cdn/subscription/subscription.html |
 
 ## 프로젝트 구조
 

@@ -105,6 +105,27 @@
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
         }
+        .demo-icon.brandpay {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+        }
+        .demo-card.brandpay .demo-btn {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            color: white;
+        }
+        .demo-icon.integrated {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        }
+        .demo-card.integrated .demo-btn {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+            color: white;
+        }
+        .demo-icon.subscription {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .demo-card.subscription .demo-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
         .demo-card:hover .demo-btn {
             transform: scale(1.05);
         }
@@ -191,10 +212,46 @@
                 <p>고객에게 이메일 또는 SMS로 결제 링크를 발송하여 비대면 결제를 요청할 수 있습니다.</p>
                 <span class="demo-btn">데모 보기</span>
             </a>
+
+            <a href="integrated/integrated.html" class="demo-card integrated">
+                <div class="demo-icon integrated">💰</div>
+                <span class="badge available">Available</span>
+                <span class="badge cdn">CDN</span>
+                <h2>통합결제</h2>
+                <p>Bootpay.requestPayment() 한 번 호출로 PG·결제수단을 선택할 수 있는 통합 결제창을 띄웁니다. 가장 기본적인 연동 방식입니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
+
+            <a href="brandpay/brandpay.html" class="demo-card brandpay">
+                <div class="demo-icon brandpay">⚡</div>
+                <span class="badge available">Available</span>
+                <span class="badge cdn">CDN</span>
+                <h2>브랜드페이</h2>
+                <p>회원의 결제수단을 저장해두고 다음부터 원클릭으로 결제. 결제위젯에 user_token만 추가하면 활성화됩니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
+
+            <a href="brandpay/wallet-manager.html" class="demo-card brandpay">
+                <div class="demo-icon brandpay">👛</div>
+                <span class="badge available">Available</span>
+                <span class="badge cdn">CDN</span>
+                <h2>지갑관리</h2>
+                <p>BootpayCommerce.launchBrandpayManager()로 회원의 저장된 결제수단을 추가·삭제·정렬하는 지갑관리 화면을 띄웁니다. 첫 인자를 비우면 가운데 모달로 표시됩니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
+
+            <a href="subscription/subscription.html" class="demo-card subscription">
+                <div class="demo-icon subscription">🔄</div>
+                <span class="badge available">Available</span>
+                <span class="badge cdn">CDN</span>
+                <h2>자동결제</h2>
+                <p>Bootpay.requestSubscription()으로 빌링키를 발급하고, 서버가 빌링키로 매 주기마다 자동 청구하는 정기결제 연동입니다.</p>
+                <span class="demo-btn">데모 보기</span>
+            </a>
         </div>
 
         <p class="install-code">
-            Widget CDN: <code>&lt;script src="https://js.bootpay.co.kr/bootpay-widget-5.2.0.min.js"&gt;&lt;/script&gt;</code><br>
+            Widget CDN: <code>&lt;script src="https://js.bootpay.co.kr/bootpay-widget-5.3.0.min.js"&gt;&lt;/script&gt;</code><br>
             Commerce CDN: <code>&lt;script src="https://js.bootpay.co.kr/commerce/bp-commerce-sdk-1.0.2.min.js"&gt;&lt;/script&gt;</code>
         </p>
     </div>
