@@ -11,10 +11,13 @@ export async function onRequestOptions() {
     return new Response(null, { headers: corsHeaders })
 }
 
-// 로그인 화면 자동 입력용 — 데모 회원(DEMO_MEMBER_*)을 넣었을 때만 값을 준다 (로컬 시험용)
+// 로그인 화면 자동 입력용 — 데모 회원(DEMO_MEMBER_*)이 있으면 그 회원, 없으면 데모 관리자
 export async function onRequestGet(context) {
     const member = demoMemberFrom(context.env)
-    const demo = member ? { email: member.email, password: member.password } : null
+    const { admin_email, admin_password } = getDemoCredentials()
+    const demo = member
+        ? { email: member.email, password: member.password, role: 'member' }
+        : { email: admin_email, password: admin_password, role: 'admin' }
     return new Response(JSON.stringify({ success: true, demo }), { headers: corsHeaders })
 }
 

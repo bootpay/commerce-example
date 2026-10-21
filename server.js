@@ -614,9 +614,10 @@ app.post('/api/shop/bank-deposit/webhook', async (req, res) => {
     }
 })
 
-// 로그인 화면 자동 입력용 — 데모 회원(DEMO_MEMBER_*)을 넣었을 때만 값을 준다 (로컬 시험용)
+// 로그인 화면 자동 입력용 — 데모 회원(DEMO_MEMBER_*)이 있으면 그 회원, 없으면 데모 관리자
 app.get('/api/auth/login', (req, res) => {
-    res.json({ success: true, demo: DEMO_MEMBER ? { email: DEMO_MEMBER.email, password: DEMO_MEMBER.password } : null })
+    const account = DEMO_MEMBER || DEMO_ADMIN
+    res.json({ success: true, demo: { email: account.email, password: account.password, role: DEMO_MEMBER ? 'member' : 'admin' } })
 })
 
 app.post('/api/auth/login', (req, res) => {
