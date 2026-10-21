@@ -42,6 +42,7 @@
             <a href="/admin/users/index.html">회원</a>
             <a href="/admin/payments/index.html">결제내역</a>
             <a href="/npm/widget/widget.html">결제 데모</a>
+            <a href="/shop/products/index.html">쇼핑몰</a>
             <a href="/">메인</a>
         </nav>
     </header>
@@ -61,21 +62,33 @@
     <script>
         const message = document.getElementById('message')
         const content = document.getElementById('content')
-        const currentUser = JSON.parse(localStorage.getItem('bootpay_demo_user') || 'null')
+        // 관리자 세션은 쇼핑몰 회원 세션(bootpay_demo_user)과 따로 둔다 — 상단 '관리자' 탭으로 와도 회원 로그인이 유지된다
+        const ADMIN_SESSION_KEY = 'bootpay_demo_admin'
+        let currentUser = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || 'null')
 
         function showMessage(text, type) {
             message.textContent = text
             message.className = `message show ${type}`
         }
-        function requireAdmin() {
-            if (!currentUser || currentUser.role !== 'admin') {
-                content.innerHTML = '<p>관리자 로그인이 필요합니다. 데모 관리자 계정은 admin@demo.local / admin1234 입니다.</p><p><a href="/auth/login.html">로그인으로 이동</a></p>'
+        // 데모 관리자로 자동 로그인한다 (admin@demo.local / admin1234)
+        async function requireAdmin() {
+            if (currentUser?.role === 'admin') return true
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: 'admin@demo.local', password: 'admin1234' })
+            })
+            const data = await response.json().catch(() => ({}))
+            if (!data.success || data.user?.role !== 'admin') {
+                content.innerHTML = '<p>데모 관리자로 로그인하지 못했습니다. 잠시 후 새로고침해 주세요.</p>'
                 return false
             }
+            currentUser = data.user
+            localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(currentUser))
             return true
         }
         async function loadPayments() {
-            if (!requireAdmin()) return
+            if (!(await requireAdmin())) return
             const response = await fetch('/api/admin/payments', { headers: { 'X-Demo-Admin-Id': currentUser.id } })
             const data = await response.json()
             if (!data.success) {

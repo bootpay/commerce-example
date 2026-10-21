@@ -169,6 +169,7 @@ export function renderShell(active = '') {
                 <a href="/shop/products/index.html" class="wordmark" aria-label="${escapeHtml(SHOP_STORE.name)} 홈"><span>objet<i>store</i></span><small>${escapeHtml(SHOP_STORE.name)}</small></a>
                 <nav class="main-nav" aria-label="주 메뉴"><a href="/shop/products/index.html#collection"${current('products')}>모든 상품</a><a href="/shop/products/index.html?category=flower#collection">플라워</a><a href="/shop/products/index.html?category=kitchen#collection">키친</a></nav>
                 <nav class="utility-nav" aria-label="내 쇼핑">
+                    <a href="/admin/users/index.html">관리자</a>
                     ${user ? `<a href="/shop/account/orders.html"${current('orders')}>주문 내역</a><button type="button" id="shop-logout" title="${escapeHtml(user.email || '')}">${escapeHtml(user.username || '회원')}님 · 로그아웃</button>` : `<a href="${loginPath()}"${current('login')}>로그인</a><a href="/auth/register.html"${current('register')}>회원가입</a>`}
                     <a href="/shop/cart/index.html" class="cart-link"${current('cart')}><svg width="19" height="21" viewBox="0 0 20 22" fill="none" aria-hidden="true"><path d="M3 7h14l1 13H2L3 7Z" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 8V5a3.5 3.5 0 0 1 7 0v3" stroke="currentColor" stroke-width="1.6"/></svg><span>장바구니</span><span id="cart-count-slot"></span></a>
                 </nav>
