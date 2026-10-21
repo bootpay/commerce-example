@@ -102,13 +102,15 @@ export async function startBankTransfer(order, { hostname, origin, env = {} }) {
     const chosen = accounts.find(row => row.id && row.id === order.bank_transfer?.account_id) || accounts[0] || null
     const webhookUrl = webhookUrlFor(origin, env)
     try {
-        const remote  = await registerBankDeposit(config, order, { webhookUrl })
+        // 구매자 알림톡은 건당 과금이라 SHOP_DEPOSIT_NOTIFY=1 일 때만 켠다
+        const notifyLink = env.SHOP_DEPOSIT_NOTIFY === '1' && origin?.startsWith('https://') ? `${origin}/shop/orders/complete.html?order_id=${encodeURIComponent(order.order_id)}` : ''
+        const remote  = await registerBankDeposit(config, order, { webhookUrl, notifyLink })
         // 손님에게 안내할 계좌는 부트페이 응답의 스냅샷이다 — 판매자가 계좌를 고쳐도 이 주문의 안내는 그대로다
         const account = remote.account?.account_no ? remote.account : chosen
         if (!account) return { ok: false, status: 424, code: 'BANK_ACCOUNT_MISSING', message: '판매자 입금 계좌를 확인하지 못해 무통장 입금을 받을 수 없습니다.' }
         return {
             ok: true,
-            order: { ...order, bank_transfer: { ...order.bank_transfer, account, order_number: remote.order_number || null, webhook: Boolean(webhookUrl) } }
+            order: { ...order, bank_transfer: { ...order.bank_transfer, account, order_number: remote.order_number || null, webhook: Boolean(webhookUrl), deadline: remote.deadline || null, deadline_label: remote.deadline_label || null } }
         }
     } catch (error) {
         return { ok: false, status: error.status || 424, code: error.code, message: error.message }

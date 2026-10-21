@@ -4,7 +4,7 @@ import { Bootpay } from '@bootpay/backend-js'
 import { quoteCart } from './shop/catalog.js'
 import { createVerificationStore, fetchCertificate, hashIdentity, maskEmail, parseCertificate, pgConfigFor, publicIdentity, publicPgConfig } from './functions/_shared/identity.js'
 import { commerceConfigForHost, createShopOrder, startBankTransfer, verifyShopReceipt } from './functions/_shared/shop-order.js'
-import { AWAITING_DEPOSIT, bankAccountsFor, publicBankAccounts, refreshBankOrder, verifyWebhookSignature } from './functions/_shared/bank-deposit.js'
+import { AWAITING_DEPOSIT, bankAccountsFor, closeBankDepositOnCancel, publicBankAccounts, refreshBankOrder, verifyWebhookSignature } from './functions/_shared/bank-deposit.js'
 import { demoMemberFrom } from './functions/_shared/demo-store.js'
 
 const app = express()
@@ -698,10 +698,15 @@ app.post('/api/admin/payments/:orderId/cancel', async (req, res) => {
         return res.status(409).json({ success: false, message: '이미 취소된 결제입니다.' })
     }
 
+    // 무통장 입금대기는 부트페이 입금대기도 닫는다. 이미 입금됐으면 여기서 멈춘다
     let cancelResult
     try {
-        // 무통장 입금대기 주문은 이 쇼핑몰에서만 취소한다 — 부트페이에는 입금대기 취소가 없다
-        cancelResult = await tryCancelBootpayPayment(order, req.body, admin)
+        cancelResult = await closeBankDepositOnCancel(commerceConfigForHost(req.hostname, process.env), order)
+    } catch (error) {
+        return res.status(error.status || 424).json({ success: false, message: error.message })
+    }
+    try {
+        cancelResult ||= await tryCancelBootpayPayment(order, req.body, admin)
     } catch (error) {
         if (process.env.NODE_ENV === 'production') {
             console.error('[Bootpay 결제 취소 오류]', error)

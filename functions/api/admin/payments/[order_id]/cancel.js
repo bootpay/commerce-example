@@ -1,4 +1,6 @@
 import { cancelOrder, getOrder, requireAdmin } from '../../../../_shared/demo-store.js'
+import { closeBankDepositOnCancel } from '../../../../_shared/bank-deposit.js'
+import { commerceConfigForHost } from '../../../../_shared/shop-order.js'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -30,19 +32,19 @@ export async function onRequestPost(context) {
         }
 
         const body = await context.request.json().catch(() => ({}))
-        // 무통장 입금대기 주문은 이 쇼핑몰에서만 취소한다 — 부트페이에는 입금대기 취소가 없다.
-        // 취소한 뒤 늦게 들어온 입금이 부트페이에서 붙어도 이 주문은 취소로 남는다 (refreshBankOrder 가 취소 주문을 안 본다)
+        // 무통장 입금대기는 부트페이 입금대기도 닫는다. 이미 입금됐으면 여기서 멈춘다
+        const bank = await closeBankDepositOnCancel(commerceConfigForHost(new URL(context.request.url).hostname, context.env), order)
         const cancelled = cancelOrder(orderId, {
             reason: body.reason,
             cancel_price: body.cancel_price,
             cancelled_by: admin.id,
-            mode: 'memory'
+            mode: bank?.mode || 'memory'
         })
 
         return new Response(JSON.stringify({
             success: true,
             payment: cancelled,
-            message: '데모 메모리 결제내역을 취소 처리했습니다.'
+            message: bank?.message || '데모 메모리 결제내역을 취소 처리했습니다.'
         }), { headers: corsHeaders })
     } catch (error) {
         return new Response(JSON.stringify({ success: false, message: error.message }), {

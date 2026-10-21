@@ -26,7 +26,9 @@ export function commerceConfigFor(mode, env = {}) {
     return {
         client_key: env.BOOTPAY_COMMERCE_CLIENT_KEY,
         secret_key: env.BOOTPAY_COMMERCE_SECRET_KEY,
-        api_base: (env.BOOTPAY_COMMERCE_API_BASE || COMMERCE_API_BASE[mode] || COMMERCE_API_BASE.production).replace(/\/$/, '')
+        api_base: (env.BOOTPAY_COMMERCE_API_BASE || COMMERCE_API_BASE[mode] || COMMERCE_API_BASE.production).replace(/\/$/, ''),
+        // 같은 주소로 다른 서버에 붙을 때 쓰는 Cloudflare resolveOverride 호스트 (예: dev9.paypg.kr → .9)
+        resolve_override: env.BOOTPAY_COMMERCE_RESOLVE_OVERRIDE || ''
     }
 }
 
@@ -58,7 +60,8 @@ async function commerceFetch(config, path, { method = 'GET', body } = {}) {
             Accept: 'application/json',
             Authorization: 'Basic ' + btoa(`${config.client_key}:${config.secret_key}`)
         },
-        body: body ? JSON.stringify(body) : undefined
+        body: body ? JSON.stringify(body) : undefined,
+        ...(config.resolve_override ? { cf: { resolveOverride: config.resolve_override } } : {})
     })
     const data = await response.json().catch(() => ({}))
     if (!response.ok) {
@@ -74,7 +77,7 @@ async function commerceFetch(config, path, { method = 'GET', body } = {}) {
 
 // 입금대기 주문을 부트페이에 등록한다. 부트페이는 이 주문의 주문자 이름을 입금자명으로 두고
 // 입금 알림의 이름과 비교한다 — 한 글자만 달라도 자동으로 붙지 않는다.
-export function registerBankDeposit(config, order, { webhookUrl } = {}) {
+export function registerBankDeposit(config, order, { webhookUrl, notifyLink } = {}) {
     return commerceFetch(config, '/v1/sdk/deposits', {
         method: 'POST',
         body: {
@@ -86,7 +89,9 @@ export function registerBankDeposit(config, order, { webhookUrl } = {}) {
             order_name: order.order_name,
             buyer_phone: order.shipping?.phone || undefined,
             webhook_url: webhookUrl || undefined,
-            account_id: order.bank_transfer.account_id || undefined
+            account_id: order.bank_transfer.account_id || undefined,
+            // 구매자 알림톡 (건당 과금)
+            notify: notifyLink ? { deposit_guide: true, deposit_paid: true, link: notifyLink } : undefined
         }
     })
 }
@@ -112,6 +117,25 @@ export async function bankAccountsFor(config, env = {}) {
     return fallback ? [{ id: '', ...fallback }] : []
 }
 
+// 입금대기를 닫는다 (DELETE /v1/sdk/deposits/:id)
+export function cancelBankDeposit(config, merchantOrderId) {
+    return commerceFetch(config, `/v1/sdk/deposits/${encodeURIComponent(merchantOrderId)}`, { method: 'DELETE' })
+}
+
+// 쇼핑몰에서 무통장 입금대기 주문을 취소할 때 부트페이 입금대기도 닫는다. 이미 입금됐으면 부트페이 거절(400)을
+// 그대로 던지고, 닫을 입금대기가 없거나(404) 키가 없으면 이 쇼핑몰에서만 취소한다.
+export async function closeBankDepositOnCancel(config, order) {
+    if (order?.method !== 'bank_transfer' || order.status !== AWAITING_DEPOSIT) return null
+    if (!config) return { mode: 'memory', message: '부트페이 Commerce 키가 없어 이 쇼핑몰에서만 취소했습니다.' }
+    try {
+        await cancelBankDeposit(config, order.order_id)
+        return { mode: 'bootpay', message: '부트페이 입금대기도 함께 닫았습니다.' }
+    } catch (error) {
+        if (error?.httpStatus === 404) return { mode: 'memory', message: '부트페이에 닫을 입금대기가 없어 이 쇼핑몰에서만 취소했습니다.' }
+        throw error
+    }
+}
+
 export function fetchBankDeposit(config, merchantOrderId) {
     return commerceFetch(config, `/v1/sdk/deposits/${encodeURIComponent(merchantOrderId)}`)
 }
@@ -120,7 +144,8 @@ export function fetchBankDeposit(config, merchantOrderId) {
 // - 금액이 다르면 결제 완료로 적지 않는다 — 다른 주문의 입금이 붙은 것일 수 있다 (price_mismatch).
 //   판매자가 바로잡으면(되돌림 · 올바른 입금) 다시 따라간다 — 금액 확인 필요에 갇히지 않게.
 // - 판매자가 입금 확인을 되돌리면(잘못 붙인 입금) 부트페이는 다시 awaiting 을 준다 — 결제 완료를 입금 대기로 되돌린다.
-// - 쇼핑몰에서 취소한 주문은 건드리지 않는다. 부트페이에는 입금대기 취소가 없어서 늦게 붙은 입금도 paid 로 온다.
+// - 쇼핑몰에서 취소한 주문은 건드리지 않는다.
+// - 부트페이가 입금대기를 닫았으면(expired · cancelled) 이 주문도 취소로 둔다.
 const BANK_FOLLOWS = [AWAITING_DEPOSIT, 'paid', 'price_mismatch']
 
 export function applyBankDeposit(order, remote) {
@@ -136,6 +161,10 @@ export function applyBankDeposit(order, remote) {
             paid_at: remote.paid_at || new Date().toISOString(),
             bank_transfer: { ...order.bank_transfer, order_number: remote.order_number, deposit: remote.deposit || null, remote: undefined }
         }
+    }
+    if (['expired', 'cancelled'].includes(remote.status)) {
+        const now = new Date().toISOString()
+        return { ...order, status: 'cancelled', cancel_reason: remote.status === 'expired' ? '입금 기한 지남' : '입금대기 취소', cancelled_at: now, updated_at: now }
     }
     if (remote.status === 'awaiting' && order.status !== AWAITING_DEPOSIT) {
         return { ...order, status: AWAITING_DEPOSIT, paid_at: null, reverted_at: new Date().toISOString(), bank_transfer: { ...order.bank_transfer, deposit: null, remote: undefined } }

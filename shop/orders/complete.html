@@ -38,7 +38,7 @@
             const bank = order.method === 'bank_transfer'
             switch (order.status) {
                 case 'paid': return ['주문이 완료되었습니다.', bank ? '입금이 확인되었습니다. 출고가 시작되면 휴대폰으로 알려 드릴게요.' : '주문해 주셔서 감사합니다. 출고가 시작되면 휴대폰으로 알려 드릴게요.']
-                case 'awaiting_deposit': return ['아래 계좌로 입금해 주세요.', '입금자명과 금액이 주문과 같으면 입금이 자동으로 확인돼요. 이 화면은 입금을 기다리는 동안 저절로 바뀝니다.']
+                case 'awaiting_deposit': return [order.bank_transfer?.deadline_label ? `${order.bank_transfer.deadline_label} 안에 아래 계좌로 입금해 주세요.` : '아래 계좌로 입금해 주세요.', '입금자명과 금액이 주문과 같으면 입금이 자동으로 확인돼요. 기한이 지나면 주문이 자동으로 취소돼요.']
                 case 'price_mismatch': return ['입금 금액을 확인하고 있어요.', '들어온 금액이 주문 금액과 달라요. 판매자가 확인한 뒤 연락드릴게요.']
                 case 'cancelled': return ['주문이 취소되었습니다.', order.cancel_reason ? `취소 사유: ${order.cancel_reason}` : (bank && !order.paid_at ? '입금 전에 취소된 주문이에요.' : '결제가 취소되었습니다.')]
                 default: return ['결제를 확인하고 있어요.', '결제 완료가 서버에서 아직 확인되지 않았습니다. 잠시 후 주문 내역에서 다시 확인해 주세요.']
@@ -66,7 +66,8 @@
                 ['계좌번호', bank.account.account_no, bank.account.account_no.replace(/\D/g, '')],
                 ['예금주', bank.account.holder],
                 ['입금할 금액', money(order.total_price), String(order.total_price)],
-                ['입금자명', bank.depositor]
+                ['입금자명', bank.depositor],
+                ['입금 기한', bank.deadline ? `${shortTime(bank.deadline)}까지` : '']
             ].filter(([, value]) => value) : []
             root.innerHTML = `
                 <div class="result-symbol ${paid ? '' : 'is-pending'}" aria-hidden="true">${icon(paid ? 'check' : 'clock', 26)}</div>
