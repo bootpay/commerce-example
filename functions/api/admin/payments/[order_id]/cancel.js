@@ -30,6 +30,8 @@ export async function onRequestPost(context) {
         }
 
         const body = await context.request.json().catch(() => ({}))
+        // 무통장 입금대기 주문은 이 쇼핑몰에서만 취소한다 — 부트페이에는 입금대기 취소가 없다.
+        // 취소한 뒤 늦게 들어온 입금이 부트페이에서 붙어도 이 주문은 취소로 남는다 (refreshBankOrder 가 취소 주문을 안 본다)
         const cancelled = cancelOrder(orderId, {
             reason: body.reason,
             cancel_price: body.cancel_price,

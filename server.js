@@ -3,7 +3,9 @@ import cors from 'cors'
 import { Bootpay } from '@bootpay/backend-js'
 import { quoteCart } from './shop/catalog.js'
 import { createVerificationStore, fetchCertificate, hashIdentity, maskEmail, parseCertificate, pgConfigFor, publicIdentity, publicPgConfig } from './functions/_shared/identity.js'
-import { createShopOrder, verifyShopReceipt } from './functions/_shared/shop-order.js'
+import { commerceConfigForHost, createShopOrder, startBankTransfer, verifyShopReceipt } from './functions/_shared/shop-order.js'
+import { AWAITING_DEPOSIT, bankAccountsFor, publicBankAccounts, refreshBankOrder, verifyWebhookSignature } from './functions/_shared/bank-deposit.js'
+import { demoMemberFrom } from './functions/_shared/demo-store.js'
 
 const app = express()
 const PORT = 3001
@@ -29,6 +31,9 @@ const DEMO_ADMIN = {
     updated_at: new Date().toISOString()
 }
 memberStore.set(DEMO_ADMIN.id, DEMO_ADMIN)
+// 본인인증을 건너뛴 데모 회원 — DEMO_MEMBER_EMAIL · DEMO_MEMBER_PASSWORD 가 있을 때만 (functions/_shared/demo-store.js)
+const DEMO_MEMBER = demoMemberFrom(process.env)
+if (DEMO_MEMBER) memberStore.set(DEMO_MEMBER.id, DEMO_MEMBER)
 
 function toPublicUser(user) {
     if (!user) return null
@@ -142,17 +147,22 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }))
-app.use(express.json())
+// 부트페이 웹훅 서명은 본문 원문으로 확인한다 — 파싱 전 원문을 req.rawBody 에 남긴다
+app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf.toString('utf8') } }))
 
 // ========================================
 // API: 주문 생성 (Widget용)
 // 결제 요청 전에 호출하여 서버에서 금액 계산 및 주문 저장
 // ========================================
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
     try {
         // 쇼핑몰 데모 주문서: 여러 상품·옵션 + 배송지. 금액은 shop/catalog.js 로 서버가 계산한다.
         if (Array.isArray(req.body.items)) {
-            const result = createShopOrder(req.body, memberStore.get(req.body.user_id) || null)
+            let result = createShopOrder(req.body, memberStore.get(req.body.user_id) || null)
+            if (result.ok && result.order.method === 'bank_transfer') {
+                const started = await startBankTransfer(result.order, { hostname: req.hostname, origin: `${req.protocol}://${req.get('host')}`, env: process.env })
+                result = started.ok ? { ...result, order: started.order } : started
+            }
             if (!result.ok) return res.status(result.status).json({ success: false, code: result.code, message: result.message })
             orderStore.set(result.order.order_id, result.order)
             console.log(`[쇼핑몰 주문 생성] ${result.order.order_id}: ${result.order.order_name} - ${result.order.total_price}원`)
@@ -539,28 +549,74 @@ app.get('/api/shop/config', (req, res) => {
     res.json({ success: true, ...config })
 })
 
+// 주문서의 무통장 입금 은행 고르기 — 은행 이름과 끝 네 자리만 (functions/api/shop/bank-accounts.js 와 같다)
+app.get('/api/shop/bank-accounts', async (req, res) => {
+    try {
+        const accounts = await bankAccountsFor(commerceConfigForHost(req.hostname, process.env), process.env)
+        res.json({ success: true, accounts: publicBankAccounts(accounts) })
+    } catch (error) {
+        res.status(error.status || 424).json({ success: false, code: error.code, message: error.message })
+    }
+})
+
 app.post('/api/shop/quote', (req, res) => {
     const quote = quoteCart(req.body.items, { couponCode: req.body.coupon_code || '' })
     if (!quote.ok) return res.status(400).json({ success: false, code: quote.code, message: quote.message })
     res.json({ success: true, quote })
 })
 
-app.get('/api/shop/orders', (req, res) => {
+// 무통장 주문은 부트페이에 다시 물어 상태를 맞춘다 — 웹훅이 못 닿는 자리(localhost)에서도 바뀌도록 (functions 와 같은 refreshBankOrder)
+const readShopOrder  = id => orderStore.get(id)
+const writeShopOrder = order => {
+    orderStore.set(order.order_id, { ...order, updated_at: new Date().toISOString() })
+    return orderStore.get(order.order_id)
+}
+function syncShopOrder(req, order, options = {}) {
+    return refreshBankOrder(commerceConfigForHost(req.hostname, process.env), order, { read: readShopOrder, write: writeShopOrder, ...options })
+}
+
+app.get('/api/shop/orders', async (req, res) => {
     const userId = req.query.user_id
     if (!memberStore.has(userId)) return res.status(401).json({ success: false, code: 'LOGIN_REQUIRED', message: '로그인 정보가 만료되었습니다. 다시 로그인해 주세요.' })
-    const orders = Array.from(orderStore.values())
+    const orders = await Promise.all(Array.from(orderStore.values())
         .filter(order => order.user_id === userId)
         .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
+        .map(order => syncShopOrder(req, order)))
     res.json({ success: true, orders })
 })
 
-app.get('/api/shop/orders/:orderId', (req, res) => {
+app.get('/api/shop/orders/:orderId', async (req, res) => {
     const order = orderStore.get(req.params.orderId)
     // 다른 회원의 주문은 존재 여부도 알려주지 않는다.
     if (!order || !req.query.user_id || order.user_id !== req.query.user_id) {
         return res.status(404).json({ success: false, code: 'ORDER_NOT_FOUND', message: '주문을 찾을 수 없습니다.' })
     }
-    res.json({ success: true, order })
+    res.json({ success: true, order: await syncShopOrder(req, order, { includePaid: true }) })
+})
+
+// 부트페이 입금 웹훅 — 본문은 믿지 않고 merchant_order_id 로 다시 조회한 값만 쓴다
+// (functions/api/shop/bank-deposit/webhook.js 와 같은 규칙)
+app.post('/api/shop/bank-deposit/webhook', async (req, res) => {
+    // 서명 · 시각부터 본다. 통과해도 본문은 믿지 않고 아래에서 부트페이에 다시 묻는다
+    if (!(await verifyWebhookSignature(req.rawBody || '', new Headers(req.headers), process.env.SHOP_WEBHOOK_SECRET))) {
+        return res.status(401).json({ success: false, message: '웹훅 서명이 맞지 않습니다.' })
+    }
+    const order = orderStore.get(String(req.body?.data?.merchant_order_id || ''))
+    if (!order) return res.json({ success: true, ignored: true })
+    const config = commerceConfigForHost(req.hostname, process.env)
+    if (!config) return res.status(500).json({ success: false, message: 'Commerce 키가 없습니다.' })
+    try {
+        const saved = await refreshBankOrder(config, order, { read: readShopOrder, write: writeShopOrder, includePaid: true, throwOnError: true })
+        res.json({ success: true, status: saved.status })
+    } catch (error) {
+        // 다시 조회하지 못했으면 실패로 답한다 — 부트페이가 다시 보낸다
+        res.status(500).json({ success: false, message: error.message })
+    }
+})
+
+// 로그인 화면 자동 입력용 — 데모 회원(DEMO_MEMBER_*)을 넣었을 때만 값을 준다 (로컬 시험용)
+app.get('/api/auth/login', (req, res) => {
+    res.json({ success: true, demo: DEMO_MEMBER ? { email: DEMO_MEMBER.email, password: DEMO_MEMBER.password } : null })
 })
 
 app.post('/api/auth/login', (req, res) => {
@@ -644,6 +700,7 @@ app.post('/api/admin/payments/:orderId/cancel', async (req, res) => {
 
     let cancelResult
     try {
+        // 무통장 입금대기 주문은 이 쇼핑몰에서만 취소한다 — 부트페이에는 입금대기 취소가 없다
         cancelResult = await tryCancelBootpayPayment(order, req.body, admin)
     } catch (error) {
         if (process.env.NODE_ENV === 'production') {
@@ -668,7 +725,9 @@ app.post('/api/admin/payments/:orderId/cancel', async (req, res) => {
 // ========================================
 // API: 주문 조회 (디버깅용)
 // ========================================
+// 주문에 입금 계좌 · 입금자명 · 배송지가 들어 있어 데모 관리자만 본다 (손님은 /api/shop/orders/:id)
 app.get('/api/orders/:orderId', (req, res) => {
+    if (!requireAdmin(req, res)) return
     const order = orderStore.get(req.params.orderId)
     if (!order) {
         return res.status(404).json({ success: false, message: '주문을 찾을 수 없습니다.' })
@@ -679,7 +738,8 @@ app.get('/api/orders/:orderId', (req, res) => {
 // ========================================
 // API: 전체 주문 목록 (디버깅용)
 // ========================================
-app.get('/api/orders', (_req, res) => {
+app.get('/api/orders', (req, res) => {
+    if (!requireAdmin(req, res)) return
     const orders = Array.from(orderStore.values()).map(order => ({
         ...order,
         user: order.user_id ? toPublicUser(memberStore.get(order.user_id)) : null

@@ -130,7 +130,7 @@
             await loadPayments()
         }
         function statusLabel(status) {
-            return { pending: '대기', paid: '결제완료', cancelled: '취소됨', price_mismatch: '금액불일치' }[status] || status || '대기'
+            return { pending: '대기', awaiting_deposit: '입금대기', paid: '결제완료', cancelled: '취소됨', price_mismatch: '금액불일치' }[status] || status || '대기'
         }
         function escapeHtml(value) {
             const div = document.createElement('div')

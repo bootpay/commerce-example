@@ -25,7 +25,7 @@
         const mode = new URLSearchParams(location.search).get('mode') === 'buy-now' ? 'buy-now' : 'cart'
         const user = currentUser()
         const items = mode === 'buy-now' ? [getBuyNow()].filter(Boolean) : getCart()
-        const state = { couponCode: '', quote: null, quoteError: '', busy: false, payError: '' }
+        const state = { couponCode: '', quote: null, quoteError: '', busy: false, payError: '', method: 'card' }
         let quoteSeq = 0
 
         if (!user) {
@@ -54,15 +54,26 @@
                         <div class="form-grid">
                             <div class="form-field"><label for="receiver">받는 분</label><input id="receiver" name="receiver" autocomplete="name" value="${escapeHtml(user.username || '')}" required></div>
                             <div class="form-field"><label for="receiver-phone">연락처</label><input id="receiver-phone" name="receiver_phone" autocomplete="tel" inputmode="tel" value="${escapeHtml(user.phone || '')}" required></div>
-                            <div class="form-field"><label for="zipcode">우편번호</label><input id="zipcode" name="zipcode" autocomplete="postal-code" inputmode="numeric" placeholder="06236" required></div>
-                            <div class="form-field"><label for="address1">주소</label><input id="address1" name="address1" autocomplete="address-line1" placeholder="서울 강남구 테헤란로" required></div>
-                            <div class="form-field span-2"><label for="address2">상세 주소</label><input id="address2" name="address2" autocomplete="address-line2" placeholder="동·호수"></div>
+                            <div class="form-field"><label for="zipcode">우편번호</label><input id="zipcode" name="zipcode" autocomplete="postal-code" inputmode="numeric" placeholder="06236" value="${escapeHtml(user.address?.zipcode || '')}" required></div>
+                            <div class="form-field"><label for="address1">주소</label><input id="address1" name="address1" autocomplete="address-line1" placeholder="서울 강남구 테헤란로" value="${escapeHtml(user.address?.address1 || '')}" required></div>
+                            <div class="form-field span-2"><label for="address2">상세 주소</label><input id="address2" name="address2" autocomplete="address-line2" placeholder="동·호수" value="${escapeHtml(user.address?.address2 || '')}"></div>
                             <div class="form-field span-2"><label for="memo">배송 메모</label><select id="memo" name="memo"><option value="">선택 안 함</option><option>문 앞에 놓아 주세요</option><option>경비실에 맡겨 주세요</option><option>배송 전 연락 부탁드립니다</option></select></div>
                         </div>
                     </section>
                     <section class="form-section">
                         <h2>쿠폰</h2>
                         <div class="form-field"><label for="coupon">보유 쿠폰</label><select id="coupon"><option value="">사용 안 함</option>${Object.entries(SHOP_COUPONS).map(([code, coupon]) => `<option value="${code}">${escapeHtml(coupon.name)}${coupon.minSubtotal ? ` (${money(coupon.minSubtotal)} 이상)` : ''}</option>`).join('')}</select><small id="coupon-help"></small></div>
+                    </section>
+                    <section class="form-section">
+                        <h2>결제 수단</h2>
+                        <div class="method-options" role="radiogroup" aria-label="결제 수단">
+                            <label class="checkbox-row"><input type="radio" name="method" value="card" checked> 카드 · 간편결제</label>
+                            <label class="checkbox-row"><input type="radio" name="method" value="bank_transfer"> 무통장 입금</label>
+                        </div>
+                        <div id="bank-transfer-fields" hidden>
+                            <div class="form-field" id="bank-account-field"><label>입금 은행</label><div class="method-options" id="bank-accounts" role="radiogroup" aria-label="입금 은행"><small>입금 계좌를 불러오고 있어요.</small></div><small>계좌번호는 주문을 마치면 바로 알려 드려요.</small></div>
+                            <div class="form-field"><label for="depositor">입금자명</label><input id="depositor" name="depositor" maxlength="50" value="${escapeHtml(user.username || '')}"><small>통장에 찍히는 이름과 같아야 입금이 자동으로 확인돼요. 금액도 주문 금액과 같게 보내 주세요.</small></div>
+                        </div>
                     </section>
                     <section class="form-section" style="border-bottom:0">
                         <label class="checkbox-row"><input type="checkbox" id="agree" required> 주문 상품과 결제 금액을 확인했으며, 결제 진행에 동의합니다.</label>
@@ -71,6 +82,40 @@
                 <aside class="order-summary" aria-label="결제 금액"><div id="summary"></div></aside>
             </div>`
             document.getElementById('coupon').addEventListener('change', event => { state.couponCode = event.target.value; refreshQuote() })
+            document.querySelectorAll('input[name="method"]').forEach(input => input.addEventListener('change', event => {
+                state.method = event.target.value
+                const bank = state.method === 'bank_transfer'
+                document.getElementById('bank-transfer-fields').hidden = !bank
+                document.getElementById('depositor').required = bank
+                if (bank) loadBankAccounts()
+                paint(false)
+            }))
+        }
+
+        // 판매자가 부트페이에 등록한 입금 계좌 — 은행 이름과 끝 네 자리만 온다. 하나뿐이면 고를 것 없이 그 계좌다.
+        let bankAccountsLoaded = false
+        async function loadBankAccounts() {
+            if (bankAccountsLoaded) return
+            const box = document.getElementById('bank-accounts')
+            try {
+                const { accounts } = await api('/api/shop/bank-accounts')
+                bankAccountsLoaded = true
+                if (!accounts.length) {
+                    box.innerHTML = '<small>판매자 입금 계좌가 아직 없어요.</small>'
+                    return
+                }
+                // 하나면 고를 것이 없다 — 칸 자체를 숨기고 그 계좌로 주문한다 (은행 · 계좌번호는 입금 안내에서 알려 준다)
+                if (accounts.length === 1) {
+                    box.innerHTML = `<input type="hidden" name="bank_account" value="${escapeHtml(accounts[0].id)}">`
+                    document.getElementById('bank-account-field').hidden = true
+                    return
+                }
+                // 여럿이면 은행 이름으로 고른다. 같은 은행이 둘 이상일 때만 끝 네 자리로 가른다
+                const sameBank = name => accounts.filter(row => row.bank_name === name).length > 1
+                box.innerHTML = accounts.map((account, i) => `<label class="checkbox-row"><input type="radio" name="bank_account" value="${escapeHtml(account.id)}"${i === 0 ? ' checked' : ''}> ${escapeHtml(account.bank_name)}${sameBank(account.bank_name) ? ` <span class="muted">···${escapeHtml(account.tail)}</span>` : ''}</label>`).join('')
+            } catch {
+                box.innerHTML = '<small>입금 계좌를 불러오지 못했어요. 주문하면 대표 계좌로 안내해 드려요.</small>'
+            }
         }
 
         async function refreshQuote() {
@@ -110,8 +155,12 @@
                 ${state.quoteError ? errorHtml(state.quoteError, 'retry-quote') : ''}
                 ${quote && !quote.canCheckout && !quote.couponError ? errorHtml(mode === 'cart' ? '구매할 수 없는 상품이 있어요. 장바구니에서 정리해 주세요.' : '지금 구매할 수 없는 상품이에요.') : ''}
                 ${state.payError ? errorHtml(state.payError) : ''}
-                <button type="button" id="pay" class="button button-dark button-full" ${blocked || loading ? 'disabled' : ''}>${state.busy ? '결제창 여는 중…' : `${quote ? money(quote.total) : ''} 결제하기`} <span aria-hidden="true">${icon('arrow-up-right')}</span></button>
-                <p class="summary-help">결제하기를 누르면 Bootpay 결제창이 열립니다. 결제 금액은 서버에서 다시 계산합니다.</p>
+                <button type="button" id="pay" class="button button-dark button-full" ${blocked || loading ? 'disabled' : ''}>${state.method === 'bank_transfer'
+                    ? (state.busy ? '주문 접수 중…' : `${quote ? money(quote.total) : ''} 무통장 입금으로 주문하기`)
+                    : (state.busy ? '결제창 여는 중…' : `${quote ? money(quote.total) : ''} 결제하기`)} <span aria-hidden="true">${icon('arrow-up-right')}</span></button>
+                <p class="summary-help">${state.method === 'bank_transfer'
+                    ? '주문하면 입금 계좌를 알려 드려요. 입금이 확인되면 주문이 자동으로 결제 완료로 바뀝니다.'
+                    : '결제하기를 누르면 Bootpay 결제창이 열립니다. 결제 금액은 서버에서 다시 계산합니다.'}</p>
                 ${mode === 'cart' ? `<a href="/shop/cart/index.html" class="text-link" style="margin-top:16px"><span aria-hidden="true">${icon('arrow-left')}</span> 장바구니로 돌아가기</a>` : ''}`
             document.getElementById('retry-quote')?.addEventListener('click', refreshQuote)
             document.getElementById('pay').addEventListener('click', pay)
@@ -130,6 +179,7 @@
             state.busy = true
             state.payError = ''
             paint(false)
+            if (state.method === 'bank_transfer') return orderByBankTransfer()
             try {
                 const order = await api('/api/orders', {
                     method: 'POST',
@@ -160,6 +210,25 @@
             } catch (error) {
                 state.payError = error?.event === 'cancel' ? '결제를 취소했습니다. 다시 결제하려면 결제하기를 눌러 주세요.' : (error?.message || error?.error_message || '결제에 실패했습니다.')
             } finally {
+                state.busy = false
+                paint(false)
+            }
+        }
+
+        // 무통장 입금 — 결제창 없이 주문을 입금대기로 접수하고 입금 안내 화면으로 간다.
+        // 서버가 부트페이에 입금대기로 등록하고, 판매자 폰의 뱅크알람이 입금을 읽으면 결제 완료가 된다.
+        async function orderByBankTransfer() {
+            try {
+                const depositor   = document.getElementById('depositor').value.trim()
+                const bankAccount = (document.querySelector('input[name="bank_account"]:checked') || document.querySelector('input[type="hidden"][name="bank_account"]'))?.value
+                const order = await api('/api/orders', {
+                    method: 'POST',
+                    body: { items, coupon_code: state.couponCode || undefined, user_id: user.id, shipping: shippingFromForm(), method: 'bank_transfer', depositor, bank_account: bankAccount, channel: mode }
+                })
+                sessionStorage.setItem(`bootpay_shop_checkout:${order.order_id}`, JSON.stringify({ mode, items }))
+                location.href = `/shop/orders/complete.html?${new URLSearchParams({ order_id: order.order_id })}`
+            } catch (error) {
+                state.payError = error?.message || '주문을 접수하지 못했습니다.'
                 state.busy = false
                 paint(false)
             }

@@ -1,5 +1,8 @@
-// Demo-only in-memory store.
-// Cloudflare Pages Functions may recycle isolates; data is intentionally non-persistent.
+// 데모 저장소 — 메모리에 든다. 함수는 모두 동기다.
+// Cloudflare Pages 는 요청마다 다른 isolate 로 갈 수 있어서 메모리만으로는 회원 · 주문이 사라진다
+// (로그인했는데 주문 내역이 401, 결과 화면이 「주문을 찾을 수 없습니다」). 그래서 KV(SHOP_STORE)가 있으면
+// functions/_middleware.js 가 레코드 하나(회원 · 주문 · 본인인증 토큰)를 KV 키 하나로 이어 둔다 — records() · putRecord().
+// KV 가 없으면(express server.js · 바인딩 없는 배포) 예전처럼 메모리에만 있다. @date: 2026-10-21
 
 import { createVerificationStore } from './identity.js'
 
@@ -16,6 +19,9 @@ export const verificationStore = createVerificationStore(store.verifications)
 
 const ADMIN_EMAIL = 'admin@demo.local'
 const ADMIN_PASSWORD = 'admin1234'
+
+// 미리 넣는 계정(관리자 · 데모 회원)의 시각 — 고정이라야 새 isolate 가 뜰 때마다 「바뀐 레코드」로 KV 에 다시 쓰지 않는다
+const SEED_AT = '2026-01-01T00:00:00.000Z'
 
 function nowIso() {
     return new Date().toISOString()
@@ -48,13 +54,50 @@ function seedAdmin() {
         role: 'admin',
         status: 'active',
         identity_verified: false,
-        created_at: nowIso(),
-        updated_at: nowIso()
+        created_at: SEED_AT,
+        updated_at: SEED_AT
     }
     store.users.set(admin.id, admin)
 }
 
 seedAdmin()
+
+// 본인인증을 마친 것으로 치는 데모 회원 — 무통장 입금처럼 실제 주문까지 가 보는 로컬 시험용.
+// DEMO_MEMBER_EMAIL · DEMO_MEMBER_PASSWORD 를 넣었을 때만 만든다. 이 회원은 본인인증을 건너뛰므로
+// 공개 배포에는 넣지 않는다. 이름은 무통장 입금자명 기본값이 되어 은행 입금 알림의 이름과 비교된다.
+export function demoMemberFrom(env = {}) {
+    const email = normalizeEmail(env.DEMO_MEMBER_EMAIL)
+    if (!email || !env.DEMO_MEMBER_PASSWORD) return null
+    return {
+        id: 'MEMBER_DEMO',
+        email,
+        password: String(env.DEMO_MEMBER_PASSWORD),
+        username: String(env.DEMO_MEMBER_NAME || '데모 회원').trim(),
+        phone: String(env.DEMO_MEMBER_PHONE || '01000000000').trim(),
+        // 주문서 배송지 기본값 — 로그인하면 주문서가 이 값으로 채운다
+        address: {
+            zipcode: String(env.DEMO_MEMBER_ZIPCODE || '06236').trim(),
+            address1: String(env.DEMO_MEMBER_ADDRESS1 || '서울 강남구 테헤란로 152').trim(),
+            address2: String(env.DEMO_MEMBER_ADDRESS2 || '데모 101호').trim()
+        },
+        role: 'member',
+        status: 'active',
+        identity_verified: true,
+        identity_verified_at: SEED_AT,
+        birth: null,
+        gender: null,
+        ci_hash: null,
+        created_at: SEED_AT,
+        updated_at: SEED_AT
+    }
+}
+
+// Functions 는 env 를 요청마다 받으므로 모듈 로드가 아니라 요청 때 넣는다 (isolate 가 바뀌어도 다시 선다)
+export function seedDemoMember(env) {
+    if (store.users.has('MEMBER_DEMO')) return
+    const member = demoMemberFrom(env)
+    if (member) store.users.set(member.id, member)
+}
 
 export function findUserByCiHash(ciHash) {
     return Array.from(store.users.values()).find(user => user.ci_hash && user.ci_hash === ciHash) || null
@@ -197,6 +240,43 @@ export function cancelOrder(orderId, { reason, cancel_price, cancelled_by, mode 
     }
     store.orders.set(orderId, next)
     return next
+}
+
+// ---------- 영속 (functions/_middleware.js) ----------
+// 레코드 하나 = KV 키 하나. 통째 한 덩어리로 두면 두 isolate 가 같은 덩어리를 따로 고쳐 저장할 때 나중 것이
+// 앞 것의 다른 주문까지 지운다 (코드리뷰 2026-10-21). 키를 나누면 서로 다른 주문은 서로를 못 지운다.
+// 버전은 회원 · 주문의 updated_at, 본인인증 토큰의 expiresAt 이다 — KV 메타데이터에 같이 둬서 목록 한 번으로 바뀐 것만 읽는다.
+const RECORD_MAPS = { user: () => store.users, order: () => store.orders, verify: () => store.verifications }
+
+export function recordVersion(row) {
+    return String(row?.updated_at || row?.expiresAt || '')
+}
+
+// 지금 메모리의 모든 레코드 { 'order:SHOP_1': row, ... }. 끝난 본인인증 토큰은 뺀다
+export function records() {
+    const now = Date.now()
+    const out = {}
+    for (const [prefix, map] of Object.entries(RECORD_MAPS)) {
+        for (const [id, row] of map()) {
+            if (prefix === 'verify' && !(row?.expiresAt > now)) continue
+            out[`${prefix}:${id}`] = row
+        }
+    }
+    return out
+}
+
+export function getRecord(key) {
+    const [prefix, ...rest] = key.split(':')
+    return RECORD_MAPS[prefix]?.().get(rest.join(':'))
+}
+
+// KV 에서 읽은 레코드를 메모리에 넣는다. row 가 null 이면 지운다 (쓴 본인인증 토큰)
+export function putRecord(key, row) {
+    const [prefix, ...rest] = key.split(':')
+    const map = RECORD_MAPS[prefix]?.()
+    if (!map) return
+    if (row == null) map.delete(rest.join(':'))
+    else map.set(rest.join(':'), row)
 }
 
 export function getDemoCredentials() {

@@ -210,6 +210,8 @@ ul { list-style: none; }
 .order-line > strong { font-size: 13px; font-weight: 500; }
 .checkbox-row { display: flex; gap: 10px; align-items: flex-start; font-size: 12px; color: var(--muted); }
 .checkbox-row input { margin-top: 4px; accent-color: var(--olive); }
+.method-options { display: grid; gap: 10px; margin-bottom: 16px; }
+.method-options .checkbox-row { font-size: 13px; color: var(--ink, inherit); }
 
 /* Account / auth */
 .account-page { display: grid; grid-template-columns: 1fr 1fr; max-width: 1100px; gap: 110px; padding-top: 70px; padding-bottom: 100px; }
@@ -244,6 +246,8 @@ ul { list-style: none; }
 .order-status { border: 1px solid var(--line); padding: 1px 9px; color: var(--ink); font-size: 11px; }
 .order-status.is-paid { border-color: var(--olive); color: var(--olive); }
 .order-status.is-cancelled { border-color: #c9a79e; color: var(--danger); }
+.order-status.is-waiting { border-color: var(--ink); }
+.order-row-deposit { margin: 6px 0 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .order-row-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
 .order-row-actions strong { font-size: 15px; font-weight: 500; }
 .result-page { min-height: 560px; max-width: 700px; text-align: center; padding: 65px 0 100px; }
@@ -256,6 +260,13 @@ ul { list-style: none; }
 .result-details dt { color: var(--muted); flex-shrink: 0; }
 .result-details dd { overflow-wrap: anywhere; text-align: right; }
 .result-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+.order-steps { display: flex; justify-content: center; gap: 6px; margin: 0 auto 6px; padding: 0; list-style: none; font-size: 12px; color: var(--muted); }
+.order-steps li { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border: 1px solid var(--line); white-space: nowrap; }
+.order-steps li.is-done { color: var(--olive); border-color: var(--olive); }
+.order-steps li.is-current { color: var(--ink); border-color: var(--ink); font-weight: 600; }
+.result-live { font-size: 12px; color: var(--muted); margin: -18px 0 0; }
+.copy-button { margin-left: 6px; padding: 1px 7px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 11px; cursor: pointer; }
+.copy-button:hover { border-color: var(--ink); }
 
 @media (max-width: 1100px) {
   .page-width, .site-header, .hero { width: calc(100% - 64px); }

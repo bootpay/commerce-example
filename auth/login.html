@@ -42,6 +42,14 @@
         const message = document.getElementById('message')
         const submit = document.getElementById('submit')
 
+        // 데모 회원이 설정된 로컬 서버면 이메일·비밀번호를 채워 둔다 (.env.local 의 DEMO_MEMBER_*)
+        api('/api/auth/login').then(({ demo }) => {
+            if (!demo || form.email.value || form.password.value) return
+            form.email.value = demo.email
+            form.password.value = demo.password
+            message.innerHTML = '<p class="muted">본인인증을 마친 데모 회원으로 채웠어요. 로그인을 누르면 바로 주문할 수 있어요.</p>'
+        }).catch(() => {})
+
         form.addEventListener('submit', async event => {
             event.preventDefault()
             if (!form.reportValidity()) return

@@ -1,8 +1,8 @@
 // Cloudflare Pages Functions - /api/orders
 // Widget 예제용 주문 생성 API
 
-import { getRawUser, listOrders, saveOrder } from '../_shared/demo-store.js'
-import { createShopOrder } from '../_shared/shop-order.js'
+import { getRawUser, listOrders, requireAdmin, saveOrder, seedDemoMember } from '../_shared/demo-store.js'
+import { createShopOrder, startBankTransfer } from '../_shared/shop-order.js'
 
 // 상품 정보 (서버에서 관리 - 위변조 방지)
 const PRODUCTS = {
@@ -31,8 +31,13 @@ export async function onRequestOptions() {
     return new Response(null, { headers: corsHeaders })
 }
 
-// GET /api/orders - 전체 주문 목록 (데모용)
-export async function onRequestGet() {
+// GET /api/orders - 전체 주문 목록 (데모용). 주문에 입금 계좌 · 입금자명 · 배송지가 들어 있어 데모 관리자만 본다
+export async function onRequestGet(context) {
+    try {
+        requireAdmin(context.request)
+    } catch (error) {
+        return new Response(JSON.stringify({ success: false, message: error.message }), { status: error.status || 403, headers: corsHeaders })
+    }
     return new Response(JSON.stringify({
         success: true,
         orders: listOrders()
@@ -43,10 +48,16 @@ export async function onRequestGet() {
 export async function onRequestPost(context) {
     try {
         const body = await context.request.json()
+        seedDemoMember(context.env)
 
         // 쇼핑몰 데모 주문서: 여러 상품·옵션 + 배송지. 금액은 shop/catalog.js 로 서버가 계산한다.
         if (Array.isArray(body.items)) {
-            const result = createShopOrder(body, getRawUser(body.user_id))
+            let result = createShopOrder(body, getRawUser(body.user_id))
+            if (result.ok && result.order.method === 'bank_transfer') {
+                const url = new URL(context.request.url)
+                const started = await startBankTransfer(result.order, { hostname: url.hostname, origin: url.origin, env: context.env })
+                result = started.ok ? { ...result, order: started.order } : started
+            }
             if (!result.ok) {
                 return new Response(JSON.stringify({ success: false, code: result.code, message: result.message }), { status: result.status, headers: corsHeaders })
             }

@@ -200,6 +200,35 @@ export function renderShell(active = '') {
     }
 }
 
+// ---------- 주문 상태 ----------
+// 주문 내역 · 주문 결과 두 화면이 같은 말을 쓰도록 한 곳에 둔다
+export const ORDER_STATUS = { paid: '결제 완료', pending: '결제 대기', awaiting_deposit: '입금 대기', cancelled: '결제 취소', price_mismatch: '금액 확인 필요' }
+export const ORDER_STATUS_CLASS = { paid: 'is-paid', cancelled: 'is-cancelled', awaiting_deposit: 'is-waiting', price_mismatch: 'is-cancelled' }
+// 입금 전에 취소한 무통장 주문은 돈이 오간 적이 없으니 「결제 취소」가 아니라 「주문 취소」다
+export function orderStatusLabel(order) {
+    if (order?.status === 'cancelled' && order.method === 'bank_transfer' && !order.paid_at) return '주문 취소'
+    return ORDER_STATUS[order?.status] || order?.status || ''
+}
+// 10. 21. 오전 9:20 처럼 짧게 — 주문 화면은 연도까지 필요 없다
+export function shortTime(value) {
+    if (!value) return ''
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+// [data-copy] 버튼을 누르면 그 값을 복사하고 버튼 글자로 알려 준다
+export function bindCopyButtons(root) {
+    root.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
+        const label = button.textContent
+        try {
+            await navigator.clipboard.writeText(button.dataset.copy)
+            button.textContent = '복사됨'
+        } catch {
+            button.textContent = '복사 안 됨'
+        }
+        setTimeout(() => { button.textContent = label }, 1500)
+    }))
+}
+
 export function errorHtml(message, retryId = '') {
     return `<div class="error-notice" role="alert"><p>${escapeHtml(message)}</p>${retryId ? `<button class="text-link" type="button" id="${retryId}">다시 시도하기</button>` : ''}</div>`
 }

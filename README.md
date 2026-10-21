@@ -133,6 +133,32 @@ import Bootpay, { BootpayWidget } from '@bootpay/client-js'
 
 > **중요**: 반드시 **http://localhost:8788** 로 접속해야 API가 작동합니다.
 
+### 데모 계정
+
+회원·주문은 서버 메모리에 든다. Cloudflare Pages 배포는 KV 바인딩 `SHOP_STORE` 가 있으면 거기에 이어 둔다(`functions/_middleware.js`) —
+없으면 요청이 다른 isolate 로 갈 때 로그인 · 주문이 사라진다. 로컬 `npm run dev` 는 로컬 KV(`.wrangler/state`)를 쓴다.
+
+| 계정 | 아이디 / 비밀번호 | 비고 |
+|---|---|---|
+| 관리자 | `admin@demo.local` / `admin1234` | 항상 있다. 본인인증을 안 해서 주문은 못 한다 |
+| 데모 회원 | `.env.local` 의 `DEMO_MEMBER_EMAIL` / `DEMO_MEMBER_PASSWORD` (예: `demo@demo.local` / `demo1234`) | 본인인증을 마친 회원으로 만든다. 로그인 화면에 자동으로 채워지고, 주문서의 주문자·배송지도 이 회원 값(`DEMO_MEMBER_NAME` · `_PHONE` · `_ZIPCODE` · `_ADDRESS1` · `_ADDRESS2`)으로 채워진다 |
+
+- 쇼핑몰 주문은 본인인증을 마친 회원만 할 수 있다. 실제 본인인증 없이 주문까지 시험하려면 데모 회원을 쓴다.
+- 데모 회원은 `DEMO_MEMBER_*` 를 넣었을 때만 생긴다. **공개 배포에는 넣지 않는다** — 누구나 본인인증 없이 주문할 수 있게 된다.
+- `DEMO_MEMBER_NAME` 이 무통장 입금자명 기본값이다. 뱅크알람은 은행 입금 알림의 이름과 이 이름을 비교하므로 실제로 입금할 사람 이름을 넣는다.
+
+### 무통장 입금 (뱅크알람)
+
+주문서에서 「무통장 입금」을 고르면 부트페이 Commerce API(`POST /v1/sdk/deposits`)로 입금대기 주문을 등록하고,
+판매자 폰의 뱅크알람이 입금을 확인하면 주문이 결제 완료로 바뀐다. 필요한 값은 `.env.example` 의 무통장 입금 절을 본다
+(`BOOTPAY_COMMERCE_CLIENT_KEY` · `BOOTPAY_COMMERCE_SECRET_KEY` · `BOOTPAY_COMMERCE_API_BASE` · `SHOP_BANK_*`).
+
+- Commerce 키에 `supervisor:order_deposit_create` · `_detail` API Scope 가 DB 에 있어야 한다 (없으면 `401 API_ROLE_NOT_SUPPORT`).
+- 웹훅 주소는 `https://<쇼핑몰 도메인>/api/shop/bank-deposit/webhook` 이다. 부트페이 관리자 개발자 설정 › 웹훅 › 뱅크알람에 넣고,
+  거기서 받은 서명 키를 `SHOP_WEBHOOK_SECRET` 에 둔다. 웹훅 본문은 믿지 않고 입금 상태를 다시 조회해 반영한다.
+- localhost 에는 웹훅이 못 오므로 주문 결과 · 주문 내역 화면이 입금을 기다리는 동안 다시 조회해 상태를 맞춘다.
+- 부트페이에는 입금대기 취소가 없다. 쇼핑몰에서 주문을 취소해도 부트페이 쪽 입금대기는 그대로이고, 늦게 붙은 입금은 무시된다.
+
 ## 부트페이 키 설정
 
 ### CDN 예제 설정
