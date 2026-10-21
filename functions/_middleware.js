@@ -35,7 +35,7 @@ async function remoteVersions(kv) {
 // 그래서 요청이 가리키는 주문 · 회원은 목록과 따로 키로 직접 읽는다. 키 하나 읽기는 쓴 곳에서 바로 보인다
 function keysOfRequest(url) {
     const keys = []
-    const orderId = url.pathname.match(/^\/api\/shop\/orders\/([^/]+)$/)?.[1]
+    const orderId = url.pathname.match(/^\/api\/(?:shop\/orders|admin\/payments)\/([^/]+)(?:\/cancel)?$/)?.[1]
     if (orderId) keys.push(`order:${decodeURIComponent(orderId)}`)
     const userId = url.searchParams.get('user_id')
     if (userId) keys.push(`user:${userId}`)
