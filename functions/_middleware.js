@@ -31,8 +31,23 @@ async function remoteVersions(kv) {
     return versions
 }
 
-async function hydrate(kv) {
+// KV 키 목록은 최대 1분 늦다 — 막 만든 주문은 목록에 없어 결과 화면이 404 를 냈다(2026-10-21 실측 40초 넘게).
+// 그래서 요청이 가리키는 주문 · 회원은 목록과 따로 키로 직접 읽는다. 키 하나 읽기는 쓴 곳에서 바로 보인다
+function keysOfRequest(url) {
+    const keys = []
+    const orderId = url.pathname.match(/^\/api\/shop\/orders\/([^/]+)$/)?.[1]
+    if (orderId) keys.push(`order:${decodeURIComponent(orderId)}`)
+    const userId = url.searchParams.get('user_id')
+    if (userId) keys.push(`user:${userId}`)
+    return keys
+}
+
+async function hydrate(kv, url) {
     const versions = await remoteVersions(kv)
+    await Promise.all(keysOfRequest(url).filter(key => !versions.has(key)).map(async key => {
+        const { metadata } = await kv.getWithMetadata(key)
+        if (metadata) versions.set(key, String(metadata.v || ''))
+    }))
     await Promise.all(Array.from(versions, async ([key, version]) => {
         if (synced.get(key)?.version === version) return
         const row = await kv.get(key, 'json')
@@ -43,13 +58,14 @@ async function hydrate(kv) {
         putRecord(key, row)
         synced.set(key, { json: jsonOf(row), version })
     }))
-    // 다른 isolate 가 지운 키(쓴 본인인증 토큰) — 여기서 손대지 않았으면 같이 지운다
-    for (const key of Array.from(synced.keys())) {
-        if (!versions.has(key) && !isDirty(key)) {
-            putRecord(key, null)
-            synced.delete(key)
-        }
-    }
+    // 다른 isolate 가 지운 키(쓴 본인인증 토큰) — 여기서 손대지 않았으면 같이 지운다.
+    // 목록이 늦어 방금 쓴 키가 빠져 있을 수 있으니 키를 직접 읽어 정말 없을 때만 지운다
+    await Promise.all(Array.from(synced.keys()).filter(key => !versions.has(key) && !isDirty(key)).map(async key => {
+        const { metadata } = await kv.getWithMetadata(key)
+        if (metadata) return
+        putRecord(key, null)
+        synced.delete(key)
+    }))
 }
 
 // 바뀐 레코드만 올린다. 남이 먼저 고친 레코드는 덮지 않고 그 값을 받아 온 뒤 겹친 키를 돌려준다
@@ -93,10 +109,11 @@ const unavailable = message => new Response(JSON.stringify({ success: false, cod
 
 export async function onRequest(context) {
     const kv = context.env.SHOP_STORE
-    if (!kv || !new URL(context.request.url).pathname.startsWith('/api/')) return context.next()
+    const url = new URL(context.request.url)
+    if (!kv || !url.pathname.startsWith('/api/')) return context.next()
 
     try {
-        await hydrate(kv)
+        await hydrate(kv, url)
     } catch (error) {
         console.error('[demo-store] KV 읽기 실패', error)
         return unavailable('주문 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
