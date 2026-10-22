@@ -5,13 +5,16 @@
 // KV 가 없으면(express server.js · 바인딩 없는 배포) 예전처럼 메모리에만 있다. @date: 2026-10-21
 
 import { createVerificationStore } from './identity.js'
+import { ALIMTALK_WEBHOOK_KEEP, sortAlimtalkWebhooks } from './alimtalk-webhook.js'
 
 const store = globalThis.__BOOTPAY_COMMERCE_DEMO_STORE__ || {
     users: new Map(),
     orders: new Map(),
-    verifications: new Map()
+    verifications: new Map(),
+    alimtalkWebhooks: new Map()
 }
 store.verifications ||= new Map()
+store.alimtalkWebhooks ||= new Map()
 
 globalThis.__BOOTPAY_COMMERCE_DEMO_STORE__ = store
 
@@ -242,11 +245,27 @@ export function cancelOrder(orderId, { reason, cancel_price, cancelled_by, mode 
     return next
 }
 
+// 받은 알림톡 웹훅 (functions/_shared/alimtalk-webhook.js) — Delivery-Id 하나에 한 줄, 최근 ALIMTALK_WEBHOOK_KEEP 건만 남긴다
+export function getAlimtalkWebhook(id) {
+    return store.alimtalkWebhooks.get(id) || null
+}
+
+export function saveAlimtalkWebhook(row) {
+    store.alimtalkWebhooks.set(row.id, row)
+    const rows = sortAlimtalkWebhooks(Array.from(store.alimtalkWebhooks.values()))
+    for (const old of rows.slice(ALIMTALK_WEBHOOK_KEEP)) store.alimtalkWebhooks.delete(old.id)
+    return row
+}
+
+export function listAlimtalkWebhooks() {
+    return sortAlimtalkWebhooks(Array.from(store.alimtalkWebhooks.values()))
+}
+
 // ---------- 영속 (functions/_middleware.js) ----------
 // 레코드 하나 = KV 키 하나. 통째 한 덩어리로 두면 두 isolate 가 같은 덩어리를 따로 고쳐 저장할 때 나중 것이
 // 앞 것의 다른 주문까지 지운다 (코드리뷰 2026-10-21). 키를 나누면 서로 다른 주문은 서로를 못 지운다.
 // 버전은 회원 · 주문의 updated_at, 본인인증 토큰의 expiresAt 이다 — KV 메타데이터에 같이 둬서 목록 한 번으로 바뀐 것만 읽는다.
-const RECORD_MAPS = { user: () => store.users, order: () => store.orders, verify: () => store.verifications }
+const RECORD_MAPS = { user: () => store.users, order: () => store.orders, verify: () => store.verifications, alimtalk: () => store.alimtalkWebhooks }
 
 export function recordVersion(row) {
     return String(row?.updated_at || row?.expiresAt || '')

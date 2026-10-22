@@ -10,7 +10,7 @@
 
 import { getRecord, putRecord, recordVersion, records } from './_shared/demo-store.js'
 
-const PREFIXES = ['user:', 'order:', 'verify:']
+const PREFIXES = ['user:', 'order:', 'verify:', 'alimtalk:']
 
 // 키마다 이 isolate 가 KV 와 마지막으로 맞춘 값 { json, version }. 메모리 값이 이것과 다르면 아직 안 올린 변경이다
 const synced = globalThis.__BOOTPAY_COMMERCE_DEMO_SYNCED__ ||= new Map()

@@ -6,6 +6,7 @@ import { createVerificationStore, fetchCertificate, hashIdentity, maskEmail, par
 import { commerceConfigForHost, createShopOrder, startBankTransfer, verifyShopReceipt } from './functions/_shared/shop-order.js'
 import { AWAITING_DEPOSIT, bankAccountsFor, closeBankDepositOnCancel, publicBankAccounts, refreshBankOrder, verifyWebhookSignature } from './functions/_shared/bank-deposit.js'
 import { demoMemberFrom } from './functions/_shared/demo-store.js'
+import { ALIMTALK_WEBHOOK_KEEP, receiveAlimtalkWebhook, sortAlimtalkWebhooks } from './functions/_shared/alimtalk-webhook.js'
 
 const app = express()
 const PORT = 3001
@@ -17,6 +18,7 @@ const PORT = 3001
 const orderStore = new Map()
 const memberStore = new Map()
 const verificationStore = createVerificationStore()
+const alimtalkWebhookStore = new Map()
 
 const DEMO_ADMIN = {
     id: 'ADMIN_DEMO',
@@ -614,6 +616,18 @@ app.post('/api/shop/bank-deposit/webhook', async (req, res) => {
     }
 })
 
+// 부트페이 알림톡 웹훅 — 받은 그대로 쌓아 관리자 › 알림톡 웹훅에서 본다
+// (functions/api/alimtalk/webhook.js 와 같은 규칙)
+app.post('/api/alimtalk/webhook', async (req, res) => {
+    const existing = alimtalkWebhookStore.get(String(req.get('X-Bootpay-Delivery-Id') || '')) || null
+    const { status, body, row } = await receiveAlimtalkWebhook(req.rawBody || '', new Headers(req.headers), process.env.ALIMTALK_WEBHOOK_SECRET, existing)
+    if (row) {
+        alimtalkWebhookStore.set(row.id, row)
+        for (const old of sortAlimtalkWebhooks(Array.from(alimtalkWebhookStore.values())).slice(ALIMTALK_WEBHOOK_KEEP)) alimtalkWebhookStore.delete(old.id)
+    }
+    res.status(status).json(body)
+})
+
 // 로그인 화면 자동 입력용 — 데모 회원(DEMO_MEMBER_*)을 넣었을 때만 값을 준다
 app.get('/api/auth/login', (req, res) => {
     res.json({ success: true, demo: DEMO_MEMBER ? { email: DEMO_MEMBER.email, password: DEMO_MEMBER.password } : null })
@@ -684,6 +698,12 @@ app.get('/api/admin/payments', (req, res) => {
         }))
         .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
     res.json({ success: true, payments })
+})
+
+app.get('/api/admin/alimtalk-webhooks', (req, res) => {
+    const admin = requireAdmin(req, res)
+    if (!admin) return
+    res.json({ success: true, secret_configured: Boolean(process.env.ALIMTALK_WEBHOOK_SECRET), webhooks: sortAlimtalkWebhooks(Array.from(alimtalkWebhookStore.values())) })
 })
 
 app.post('/api/admin/payments/:orderId/cancel', async (req, res) => {

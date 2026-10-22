@@ -15,6 +15,7 @@ export default defineConfig({
                 adminIndex: resolve(__dirname, 'admin/index.html'),
                 adminUsers: resolve(__dirname, 'admin/users/index.html'),
                 adminPayments: resolve(__dirname, 'admin/payments/index.html'),
+                adminAlimtalk: resolve(__dirname, 'admin/alimtalk/index.html'),
                 shopProducts: resolve(__dirname, 'shop/products/index.html'),
                 shopProductDetail: resolve(__dirname, 'shop/products/detail.html'),
                 shopOrderNew: resolve(__dirname, 'shop/orders/new.html'),

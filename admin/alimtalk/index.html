@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 알림톡 웹훅</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #172033; }
+        header { padding: 18px 28px; background: #111827; color: white; display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #c7d2fe; text-decoration: none; margin-left: 16px; font-weight: 700; }
+        main { max-width: 1240px; margin: 36px auto; padding: 0 20px; display: grid; gap: 20px; }
+        .panel { background: white; border-radius: 16px; padding: 26px; box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08); }
+        .toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        h1, h2 { margin: 0; }
+        h2 { font-size: 17px; margin-bottom: 12px; }
+        p { color: #64748b; margin: 6px 0 0; }
+        .url { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .url code { font-size: 14px; padding: 8px 10px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; font-size: 14px; }
+        th { color: #475569; font-size: 13px; background: #f8fafc; white-space: nowrap; }
+        tr.row { cursor: pointer; }
+        tr.row:hover td { background: #f8fafc; }
+        tr.detail td { background: #f8fafc; }
+        pre { margin: 0; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+        button { padding: 8px 11px; border: 0; border-radius: 8px; background: #e2e8f0; color: #172033; font-weight: 800; cursor: pointer; }
+        .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+        .ok { background: #dcfce7; color: #166534; }
+        .fail { background: #fee2e2; color: #991b1b; }
+        .info { background: #e0e7ff; color: #3730a3; }
+        .warn { background: #fef3c7; color: #92400e; }
+        code { font-size: 12px; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; }
+        small { color: #64748b; }
+        .message { padding: 12px; border-radius: 10px; display: none; }
+        .message.show { display: block; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .message.warn { background: #fef3c7; color: #92400e; }
+        .empty { padding: 24px; text-align: center; color: #64748b; }
+    </style>
+</head>
+<body>
+    <header>
+        <strong>관리자</strong>
+        <nav>
+            <a href="/admin/users/index.html">회원</a>
+            <a href="/admin/payments/index.html">결제내역</a>
+            <a href="/admin/alimtalk/index.html">알림톡 웹훅</a>
+            <a href="/shop/products/index.html">쇼핑몰</a>
+            <a href="/">메인</a>
+        </nav>
+    </header>
+    <main>
+        <section class="panel">
+            <h2>수신 주소</h2>
+            <div class="url"><code id="webhook-url"></code><button id="copy">복사</button></div>
+            <p>부트페이 관리자 › 메시지 설정 › 웹훅에 이 주소를 저장하세요. 같은 화면의 서명 키를 <code>ALIMTALK_WEBHOOK_SECRET</code> 에 넣으면 서명을 확인합니다.</p>
+        </section>
+        <div id="message" class="message"></div>
+        <section class="panel">
+            <div class="toolbar">
+                <div>
+                    <h1>받은 알림톡 웹훅</h1>
+                    <p>최근 200건을 보여 줍니다. 줄을 누르면 받은 본문이 열립니다. 부트페이가 다시 보낸 같은 전송은 한 줄로 합쳐 받은 횟수만 늘립니다.</p>
+                </div>
+                <button id="refresh">새로고침</button>
+            </div>
+            <div id="content" class="empty">불러오는 중...</div>
+        </section>
+    </main>
+    <script>
+        const message = document.getElementById('message')
+        const content = document.getElementById('content')
+        const webhookUrl = `${location.origin}/api/alimtalk/webhook`
+        document.getElementById('webhook-url').textContent = webhookUrl
+        document.getElementById('copy').addEventListener('click', async event => {
+            try { await navigator.clipboard.writeText(webhookUrl); event.target.textContent = '복사됨' } catch { event.target.textContent = '직접 선택해 복사하세요' }
+        })
+
+        // 관리자 세션은 쇼핑몰 회원 세션(bootpay_demo_user)과 따로 둔다
+        const ADMIN_SESSION_KEY = 'bootpay_demo_admin'
+        let currentUser = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || 'null')
+
+        function showMessage(text, type) {
+            message.textContent = text
+            message.className = `message show ${type}`
+        }
+        // 데모 관리자로 자동 로그인한다 (admin@demo.local / admin1234)
+        async function requireAdmin() {
+            if (currentUser?.role === 'admin') return true
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: 'admin@demo.local', password: 'admin1234' })
+            })
+            const data = await response.json().catch(() => ({}))
+            if (!data.success || data.user?.role !== 'admin') {
+                content.innerHTML = '<p>데모 관리자로 로그인하지 못했습니다. 잠시 후 새로고침해 주세요.</p>'
+                return false
+            }
+            currentUser = data.user
+            localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(currentUser))
+            return true
+        }
+        async function loadWebhooks() {
+            if (!(await requireAdmin())) return
+            const response = await fetch('/api/admin/alimtalk-webhooks', { headers: { 'X-Demo-Admin-Id': currentUser.id } })
+            const data = await response.json().catch(() => ({}))
+            if (!data.success) {
+                showMessage(data.message || '알림톡 웹훅을 불러오지 못했습니다.', 'error')
+                return
+            }
+            if (!data.secret_configured) showMessage('ALIMTALK_WEBHOOK_SECRET 이 없어 서명을 확인하지 않고 받고 있습니다. 서명 키를 넣으면 위조 요청을 거절합니다.', 'warn')
+            else message.className = 'message'
+            if (!data.webhooks.length) {
+                content.className = 'empty'
+                content.innerHTML = '<div class="empty">아직 받은 웹훅이 없습니다. 부트페이 관리자 › 메시지 설정 › 웹훅에서 「테스트 발송」을 눌러 보세요.</div>'
+                return
+            }
+            content.className = ''
+            content.innerHTML = `
+                <div class="table-wrap"><table>
+                    <thead><tr><th>받은 시각</th><th>이벤트</th><th>결과</th><th>템플릿</th><th>수신번호</th><th>접수번호 · ref_id</th><th>서명</th><th>받은 횟수</th></tr></thead>
+                    <tbody>${data.webhooks.map(renderRow).join('')}</tbody>
+                </table></div>`
+            content.querySelectorAll('tr.row').forEach(row => row.addEventListener('click', () => {
+                const detail = row.nextElementSibling
+                detail.hidden = !detail.hidden
+            }))
+        }
+        function renderRow(hook) {
+            const data = hook.data || {}
+            const result = data.status
+                ? `<span class="badge ${['success', 'delivered'].includes(data.status) ? 'ok' : (['failed', 'fail'].includes(data.status) ? 'fail' : 'info')}">${escapeHtml(data.status)}</span>`
+                : '-'
+            const error = data.error_code || data.error_message ? `<br><small>${escapeHtml([data.error_code, data.error_message].filter(Boolean).join(' · '))}</small>` : ''
+            const ids = [data.receipt_id, data.ref_id].filter(Boolean).map(id => `<code>${escapeHtml(id)}</code>`).join('<br>') || '-'
+            const sign = hook.verification === 'verified' ? '<span class="badge ok">확인됨</span>' : '<span class="badge warn">확인 안 함</span>'
+            return `<tr class="row">
+                <td>${formatDate(hook.received_at)}${hook.updated_at !== hook.received_at ? `<br><small>마지막 ${formatDate(hook.updated_at)}</small>` : ''}</td>
+                <td><strong>${escapeHtml(hook.event || '-')}</strong>${hook.event_code != null ? `<br><small>${escapeHtml(hook.event_code)}</small>` : ''}</td>
+                <td>${result}${error}</td>
+                <td>${data.template_code ? `<code>${escapeHtml(data.template_code)}</code>` : '-'}</td>
+                <td>${escapeHtml(maskPhone(data.to))}</td>
+                <td>${ids}</td>
+                <td>${sign}</td>
+                <td>${Number(hook.attempts || 1)}</td>
+            </tr>
+            <tr class="detail" hidden><td colspan="8"><pre>${escapeHtml(JSON.stringify({ event: hook.event, event_code: hook.event_code, occurred_at: hook.occurred_at, delivery_id: hook.id, data }, null, 2))}</pre></td></tr>`
+        }
+        function maskPhone(value) {
+            const digits = String(value || '').replace(/\D/g, '')
+            return digits.length >= 8 ? `${digits.slice(0, 3)}-****-${digits.slice(-4)}` : (value || '-')
+        }
+        function escapeHtml(value) {
+            const div = document.createElement('div')
+            div.textContent = value == null ? '' : String(value)
+            return div.innerHTML
+        }
+        function formatDate(value) {
+            return value ? new Date(value).toLocaleString('ko-KR') : '-'
+        }
+        document.getElementById('refresh').addEventListener('click', loadWebhooks)
+        loadWebhooks()
+    </script>
+</body>
+</html>
