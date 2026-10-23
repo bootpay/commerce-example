@@ -67,7 +67,8 @@
                 ['예금주', bank.account.holder],
                 ['입금할 금액', money(order.total_price), String(order.total_price)],
                 ['입금자명', bank.depositor],
-                ['입금 기한', bank.deadline ? `${shortTime(bank.deadline)}까지` : '']
+                ['입금 기한', bank.deadline ? `${shortTime(bank.deadline)}까지` : ''],
+                ['안내받을 연락처', [bank.notify_phone, bank.notify_email].filter(Boolean).join(' · ')]
             ].filter(([, value]) => value) : []
             root.innerHTML = `
                 <div class="result-symbol ${paid ? '' : 'is-pending'}" aria-hidden="true">${icon(paid ? 'check' : 'clock', 26)}</div>

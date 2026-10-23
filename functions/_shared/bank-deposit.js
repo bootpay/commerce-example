@@ -87,7 +87,11 @@ export function registerBankDeposit(config, order, { webhookUrl, notifyLink } = 
             buyer_name: order.buyer_name || undefined,
             price: order.total_price,
             order_name: order.order_name,
-            buyer_phone: order.shipping?.phone || undefined,
+            // 입금 안내를 받을 휴대폰 — 부트페이 알림톡(입금 안내 · 입금 확인)이 이 번호로 간다. 손님이 비웠으면 보내지 않는다
+            // (배송지 연락처로 대신 보내면 손님이 받겠다고 하지 않은 번호로 알림톡이 나간다)
+            buyer_phone: order.bank_transfer.notify_phone || undefined,
+            // 입금 안내를 받을 이메일 — 부트페이가 입금 안내 · 입금 확인 메일을 이 주소로 보낸다. 비웠으면 메일은 안 간다
+            buyer_email: order.bank_transfer.notify_email || undefined,
             webhook_url: webhookUrl || undefined,
             account_id: order.bank_transfer.account_id || undefined,
             // 구매자 알림톡 (건당 과금)

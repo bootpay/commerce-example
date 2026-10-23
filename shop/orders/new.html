@@ -12,6 +12,19 @@
         <div class="page-width standard-page">
             <div class="page-title"><p class="eyebrow">CHECKOUT</p><h1>주문서</h1><p>주문 상품과 배송지를 확인한 뒤 결제해 주세요.</p></div>
             <div id="order-root"></div>
+            <dialog id="deposit-confirm" class="deposit-dialog" aria-labelledby="deposit-confirm-title">
+                <form method="dialog">
+                    <p class="eyebrow">CHECK</p>
+                    <h2 id="deposit-confirm-title">입금자 정보를 확인해 주세요</h2>
+                    <div class="deposit-dialog-name"><span>입금자명</span><strong id="deposit-confirm-name"></strong></div>
+                    <dl id="deposit-confirm-rows" class="deposit-dialog-rows"></dl>
+                    <p class="deposit-dialog-warn">통장에 찍히는 이름이 이 입금자명과 다르면 입금이 자동으로 확인되지 않아요.</p>
+                    <div class="deposit-dialog-actions">
+                        <button type="submit" value="edit" class="button button-outline">수정하기</button>
+                        <button type="submit" value="ok" class="button button-dark" id="deposit-confirm-ok">이 정보로 주문하기</button>
+                    </div>
+                </form>
+            </dialog>
         </div>
     </main>
     <div id="shop-footer"></div>
@@ -72,7 +85,16 @@
                         </div>
                         <div id="bank-transfer-fields" hidden>
                             <div class="form-field" id="bank-account-field"><label>입금 은행</label><div class="method-options" id="bank-accounts" role="radiogroup" aria-label="입금 은행"><small>입금 계좌를 불러오고 있어요.</small></div><small>계좌번호는 주문을 마치면 바로 알려 드려요.</small></div>
-                            <div class="form-field"><label for="depositor">입금자명</label><input id="depositor" name="depositor" maxlength="50" value="${escapeHtml(user.username || '')}"><small>통장에 찍히는 이름과 같아야 입금이 자동으로 확인돼요. 금액도 주문 금액과 같게 보내 주세요.</small></div>
+                            <div class="depositor-box" aria-labelledby="depositor-box-title">
+                                <p class="depositor-box-title" id="depositor-box-title">입금자 정보 <span class="important-badge">중요</span></p>
+                                <p class="depositor-box-desc">주문자 정보로 채워 두었어요. 실제로 돈을 보낼 사람이 다르면 고쳐 주세요.</p>
+                                <div class="form-field depositor-field"><label for="depositor">입금자명 <span class="required-mark">필수</span></label><input id="depositor" name="depositor" maxlength="50" autocomplete="name" value="${escapeHtml(user.username || '')}"><small>통장에 찍히는 이름과 한 글자라도 다르면 입금이 자동으로 확인되지 않아요. 금액도 주문 금액과 같게 보내 주세요.</small></div>
+                                <div class="form-grid">
+                                    <div class="form-field"><label for="notify-phone">안내받을 휴대폰 <span class="muted">선택</span></label><input id="notify-phone" name="notify_phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="13" placeholder="01012345678" disabled value="${escapeHtml(user.phone || '')}"></div>
+                                    <div class="form-field"><label for="notify-email">안내받을 이메일 <span class="muted">선택</span></label><input id="notify-email" name="notify_email" type="email" autocomplete="email" maxlength="100" value="${escapeHtml(user.email || '')}" disabled></div>
+                                </div>
+                                <small class="depositor-box-note">입금 계좌 안내와 입금 확인 소식을 받을 연락처예요. 비워도 주문할 수 있어요.</small>
+                            </div>
                         </div>
                     </section>
                     <section class="form-section" style="border-bottom:0">
@@ -87,6 +109,9 @@
                 const bank = state.method === 'bank_transfer'
                 document.getElementById('bank-transfer-fields').hidden = !bank
                 document.getElementById('depositor').required = bank
+                // 숨은 칸도 폼 검사에 걸린다 — 카드 결제일 때는 안내 연락처를 검사 · 전송에서 뺀다
+                document.getElementById('notify-phone').disabled = !bank
+                document.getElementById('notify-email').disabled = !bank
                 if (bank) loadBankAccounts()
                 paint(false)
             }))
@@ -175,7 +200,16 @@
         async function pay() {
             if (state.busy) return
             const form = document.getElementById('order-form')
+            // 안내받을 휴대폰은 비워도 되지만 적었으면 휴대폰 번호여야 한다 (하이픈 · 공백은 서버도 지운다)
+            const notifyPhone = document.getElementById('notify-phone')
+            const phoneDigits = notifyPhone.value.replace(/\D/g, '')
+            notifyPhone.setCustomValidity(!notifyPhone.disabled && phoneDigits && !/^01\d{8,9}$/.test(phoneDigits) ? '휴대폰 번호를 확인해 주세요. 예) 01012345678' : '')
             if (!form.reportValidity()) return
+            // 입금자명은 한 글자만 달라도 입금이 자동으로 안 붙는다 — 주문 전에 이름과 금액을 한 번 더 확인받는다
+            if (state.method === 'bank_transfer' && !(await confirmDeposit())) {
+                document.getElementById('depositor').focus()
+                return
+            }
             state.busy = true
             state.payError = ''
             paint(false)
@@ -215,15 +249,37 @@
             }
         }
 
+        // 주문 직전 확인 창 — 입금자명을 크게, 금액 · 은행 · 안내 연락처를 함께 보여 준다. 「이 정보로 주문하기」만 true
+        function confirmDeposit() {
+            const dialog = document.getElementById('deposit-confirm')
+            const value = id => document.getElementById(id).value.trim()
+            const bank = document.querySelector('input[name="bank_account"]:checked')?.closest('label')?.textContent.trim()
+            const contacts = [value('notify-phone'), value('notify-email')].filter(Boolean).join(' · ')
+            document.getElementById('deposit-confirm-name').textContent = value('depositor')
+            document.getElementById('deposit-confirm-rows').innerHTML = [
+                ['입금할 금액', state.quote ? money(state.quote.total) : ''],
+                ['입금 은행', bank || ''],
+                ['안내받을 연락처', contacts || '받지 않음']
+            ].filter(([, v]) => v).map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join('')
+            dialog.returnValue = ''
+            return new Promise(resolve => {
+                dialog.addEventListener('close', () => resolve(dialog.returnValue === 'ok'), { once: true })
+                dialog.showModal()
+                document.getElementById('deposit-confirm-ok').focus()
+            })
+        }
+
         // 무통장 입금 — 결제창 없이 주문을 입금대기로 접수하고 입금 안내 화면으로 간다.
         // 서버가 부트페이에 입금대기로 등록하고, 판매자 폰의 뱅크알람이 입금을 읽으면 결제 완료가 된다.
         async function orderByBankTransfer() {
             try {
                 const depositor   = document.getElementById('depositor').value.trim()
+                const notifyPhone = document.getElementById('notify-phone').value.replace(/\D/g, '')
+                const notifyEmail = document.getElementById('notify-email').value.trim()
                 const bankAccount = (document.querySelector('input[name="bank_account"]:checked') || document.querySelector('input[type="hidden"][name="bank_account"]'))?.value
                 const order = await api('/api/orders', {
                     method: 'POST',
-                    body: { items, coupon_code: state.couponCode || undefined, user_id: user.id, shipping: shippingFromForm(), method: 'bank_transfer', depositor, bank_account: bankAccount, channel: mode }
+                    body: { items, coupon_code: state.couponCode || undefined, user_id: user.id, shipping: shippingFromForm(), method: 'bank_transfer', depositor, notify_phone: notifyPhone || undefined, notify_email: notifyEmail || undefined, bank_account: bankAccount, channel: mode }
                 })
                 sessionStorage.setItem(`bootpay_shop_checkout:${order.order_id}`, JSON.stringify({ mode, items }))
                 location.href = `/shop/orders/complete.html?${new URLSearchParams({ order_id: order.order_id })}`

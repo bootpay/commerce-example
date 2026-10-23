@@ -33,6 +33,16 @@ export function createShopOrder(body, rawUser) {
     if (method === 'bank_transfer' && !depositor) {
         return { ok: false, status: 400, code: 'DEPOSITOR_REQUIRED', message: '입금자명을 입력해 주세요.' }
     }
+    // 입금 안내를 받을 휴대폰 · 이메일 — 둘 다 선택이다. 휴대폰은 부트페이 buyer_phone 으로 가서 입금 안내 · 입금 확인
+    // 알림톡을 받는 번호가 된다(배송지 연락처와 따로). 적었으면 형식은 맞아야 한다 — 틀린 번호로는 알림톡이 안 간다
+    const notifyPhone = String(body.notify_phone || '').replace(/\D/g, '')
+    const notifyEmail = String(body.notify_email || '').trim().slice(0, 100)
+    if (method === 'bank_transfer' && notifyPhone && !/^01\d{8,9}$/.test(notifyPhone)) {
+        return { ok: false, status: 400, code: 'NOTIFY_PHONE_INVALID', message: '안내받을 휴대폰 번호를 확인해 주세요.' }
+    }
+    if (method === 'bank_transfer' && notifyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail)) {
+        return { ok: false, status: 400, code: 'NOTIFY_EMAIL_INVALID', message: '안내받을 이메일 주소를 확인해 주세요.' }
+    }
     const order = {
         order_id: orderId,
         order_name: quote.orderName,
@@ -52,7 +62,7 @@ export function createShopOrder(body, rawUser) {
         buyer_name: rawUser.username || '',
         status: method === 'bank_transfer' ? AWAITING_DEPOSIT : 'pending',
         // 손님이 고른 입금 계좌 id (GET /v1/sdk/deposits/accounts). 비면 대표 계좌다
-        ...(method === 'bank_transfer' ? { bank_transfer: { depositor, account_id: String(body.bank_account || '').trim() || undefined } } : {}),
+        ...(method === 'bank_transfer' ? { bank_transfer: { depositor, account_id: String(body.bank_account || '').trim() || undefined, notify_phone: notifyPhone || undefined, notify_email: notifyEmail || undefined } } : {}),
         created_at: new Date().toISOString()
     }
     return {
@@ -102,8 +112,9 @@ export async function startBankTransfer(order, { hostname, origin, env = {} }) {
     const chosen = accounts.find(row => row.id && row.id === order.bank_transfer?.account_id) || accounts[0] || null
     const webhookUrl = webhookUrlFor(origin, env)
     try {
-        // 구매자 알림톡은 건당 과금이라 SHOP_DEPOSIT_NOTIFY=1 일 때만 켠다
-        const notifyLink = env.SHOP_DEPOSIT_NOTIFY === '1' && origin?.startsWith('https://') ? `${origin}/shop/orders/complete.html?order_id=${encodeURIComponent(order.order_id)}` : ''
+        // 구매자 알림톡은 건당 과금이라 SHOP_DEPOSIT_NOTIFY=1 일 때만 켠다. 받을 휴대폰이 없으면 켜지 않는다 —
+        // 부트페이가 notify 를 받고 번호가 없으면 등록 자체를 거절해(BANK_DEPOSIT_NOTIFY_PHONE_BLANK) 주문을 못 받는다
+        const notifyLink = env.SHOP_DEPOSIT_NOTIFY === '1' && order.bank_transfer?.notify_phone && origin?.startsWith('https://') ?`${origin}/shop/orders/complete.html?order_id=${encodeURIComponent(order.order_id)}` : ''
         const remote  = await registerBankDeposit(config, order, { webhookUrl, notifyLink })
         // 손님에게 안내할 계좌는 부트페이 응답의 스냅샷이다 — 판매자가 계좌를 고쳐도 이 주문의 안내는 그대로다
         const account = remote.account?.account_no ? remote.account : chosen
