@@ -387,10 +387,13 @@ app.post('/api/orders/verify', async (req, res) => {
         }
 
         // 2. Bootpay API로 실제 결제 정보 조회
-        // 주의: 실제 환경에서는 환경변수로 관리해야 합니다
+        // REST 키는 환경변수로만 받는다(공개 저장소라 코드에 두지 않는다)
+        if (!process.env.BOOTPAY_APPLICATION_ID || !process.env.BOOTPAY_PRIVATE_KEY) {
+            return res.status(500).json({ success: false, message: 'BOOTPAY_APPLICATION_ID · BOOTPAY_PRIVATE_KEY 환경변수가 없습니다.' })
+        }
         Bootpay.setConfiguration({
-            application_id: process.env.BOOTPAY_APPLICATION_ID || '692682dfb2084136e29ac1d9',
-            private_key: process.env.BOOTPAY_PRIVATE_KEY || 'your-private-key-here'
+            application_id: process.env.BOOTPAY_APPLICATION_ID,
+            private_key: process.env.BOOTPAY_PRIVATE_KEY
         })
 
         let paymentInfo
