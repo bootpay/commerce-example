@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"vite --port 5173\" \"node scripts/pages-dev.mjs\"",
     "server": "node --env-file-if-exists=.env.development --env-file-if-exists=.env.local server.js",
-    "build": "vite build",
+    "build": "vite build && node -e \"const f=require('fs');if(f.existsSync('cdn/config.js'))f.copyFileSync('cdn/config.js','dist/cdn/config.js')\"",
     "preview": "vite preview"
   },
   "dependencies": {
