@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>주문서 — 오브제 스토어</title>
     <link rel="stylesheet" href="/shop/shop.css">
+    <!-- 카드 · 간편결제는 부트페이 결제위젯을 주문서 안에 그린다 -->
+    <script src="https://js.bootpay.co.kr/bootpay-widget-5.3.0.min.js"></script>
 </head>
 <body>
     <div id="shop-header"></div>
@@ -29,7 +31,6 @@
     </main>
     <div id="shop-footer"></div>
     <script type="module">
-        import { Bootpay } from '@bootpay/client-js'
         import { SHOP_COUPONS, findShopProduct } from '../catalog.js'
         import { api, artFor, loadPgClient, currentUser, errorHtml, escapeHtml, getBuyNow, getCart, icon, loadingHtml, loginPath, money, renderShell } from '../shop.js'
 
@@ -38,7 +39,8 @@
         const mode = new URLSearchParams(location.search).get('mode') === 'buy-now' ? 'buy-now' : 'cart'
         const user = currentUser()
         const items = mode === 'buy-now' ? [getBuyNow()].filter(Boolean) : getCart()
-        const state = { couponCode: '', quote: null, quoteError: '', busy: false, payError: '', method: 'card' }
+        const state = { couponCode: '', quote: null, quoteError: '', busy: false, payError: '', method: 'card', methodReady: false }
+        let widgetRendered = false
         let quoteSeq = 0
 
         if (!user) {
@@ -83,6 +85,7 @@
                             <label class="checkbox-row"><input type="radio" name="method" value="card" checked> 카드 · 간편결제</label>
                             <label class="checkbox-row"><input type="radio" name="method" value="bank_transfer"> 무통장 입금</label>
                         </div>
+                        <div id="card-widget-fields"><div id="payment-widget-area" class="payment-widget"></div><small id="widget-help"></small></div>
                         <div id="bank-transfer-fields" hidden>
                             <div class="form-field" id="bank-account-field"><label>입금 은행</label><div class="method-options" id="bank-accounts" role="radiogroup" aria-label="입금 은행"><small>입금 계좌를 불러오고 있어요.</small></div><small>계좌번호는 주문을 마치면 바로 알려 드려요.</small></div>
                             <div class="depositor-box" aria-labelledby="depositor-box-title">
@@ -108,6 +111,7 @@
                 state.method = event.target.value
                 const bank = state.method === 'bank_transfer'
                 document.getElementById('bank-transfer-fields').hidden = !bank
+                document.getElementById('card-widget-fields').hidden = bank
                 document.getElementById('depositor').required = bank
                 // 숨은 칸도 폼 검사에 걸린다 — 카드 결제일 때는 안내 연락처를 검사 · 전송에서 뺀다
                 document.getElementById('notify-phone').disabled = !bank
@@ -151,12 +155,45 @@
                 const { quote } = await api('/api/shop/quote', { method: 'POST', body: { items, coupon_code: state.couponCode } })
                 if (seq !== quoteSeq) return
                 state.quote = quote
+                syncWidget(quote.total)
             } catch (error) {
                 if (seq !== quoteSeq) return
                 state.quote = null
                 state.quoteError = error.message
             }
             paint(false)
+        }
+
+        // 결제위젯 — 금액이 정해지면 한 번 그리고, 쿠폰 등으로 금액이 바뀌면 update 로 맞춘다.
+        // 약관은 아래 주문서 동의 칸에서 받으므로 위젯 약관은 끈다(use_terms: false).
+        async function syncWidget(price) {
+            if (!widgetRendered) {
+                widgetRendered = true
+                try {
+                    const pg = await loadPgClient()
+                    BootpayWidget.render('#payment-widget-area', {
+                        client_key: pg.clientKey,
+                        price,
+                        sandbox: pg.mode !== 'production',
+                        widget_key: 'default-widget',
+                        use_terms: false,
+                        extra: {
+                            hide_title: true,
+                            // 위젯 바깥 여백을 0 으로 — 주문서 칸과 왼쪽 끝을 맞춘다
+                            inline_styles: { pc: { containerStyle: { 'padding-top': '0px', 'padding-bottom': '0px', 'padding-left': '0px', 'padding-right': '0px' } }, mobile: { containerStyle: { 'padding-top': '0px', 'padding-bottom': '0px', 'padding-left': '0px', 'padding-right': '0px' } } }
+                        },
+                        hooks: {
+                            // 결제수단 선택이 끝나야(completed) 결제하기를 켠다
+                            paymentMethodUpdated: data => { state.methodReady = !!data?.completed; paint(false) }
+                        }
+                    })
+                } catch (error) {
+                    widgetRendered = false
+                    document.getElementById('widget-help').textContent = '결제수단을 불러오지 못했어요. 새로고침해 주세요.'
+                }
+                return
+            }
+            try { BootpayWidget.update({ price }) } catch {}
         }
 
         function paint(loading) {
@@ -167,7 +204,7 @@
                 return `<div class="order-line"><div class="order-line-photo">${artFor(item.productId)}</div><div class="order-line-info">${escapeHtml(line?.name || product?.name || '상품')}<p>${line?.optionName ? `${escapeHtml(line.optionName)} · ` : ''}${item.quantity}개</p>${line?.problem ? `<p style="color:var(--danger)">${escapeHtml(line.problem)}</p>` : ''}</div><strong>${line ? money(line.subtotal) : '—'}</strong></div>`
             }).join('')
             document.getElementById('coupon-help').textContent = quote?.couponError || (quote?.discount ? `${money(quote.discount)} 할인됩니다.` : '')
-            const blocked = !quote?.canCheckout || state.busy
+            const blocked = !quote?.canCheckout || state.busy || (state.method === 'card' && !state.methodReady)
             document.getElementById('summary').innerHTML = `
                 <p class="eyebrow">PAYMENT</p><h2>결제 금액</h2>
                 <dl>
@@ -182,10 +219,10 @@
                 ${state.payError ? errorHtml(state.payError) : ''}
                 <button type="button" id="pay" class="button button-dark button-full" ${blocked || loading ? 'disabled' : ''}>${state.method === 'bank_transfer'
                     ? (state.busy ? '주문 접수 중…' : `${quote ? money(quote.total) : ''} 무통장 입금으로 주문하기`)
-                    : (state.busy ? '결제창 여는 중…' : `${quote ? money(quote.total) : ''} 결제하기`)} <span aria-hidden="true">${icon('arrow-up-right')}</span></button>
+                    : (state.busy ? '결제 진행 중…' : `${quote ? money(quote.total) : ''} 결제하기`)} <span aria-hidden="true">${icon('arrow-up-right')}</span></button>
                 <p class="summary-help">${state.method === 'bank_transfer'
                     ? '주문하면 입금 계좌를 알려 드려요. 입금이 확인되면 주문이 자동으로 결제 완료로 바뀝니다.'
-                    : '결제하기를 누르면 Bootpay 결제창이 열립니다. 결제 금액은 서버에서 다시 계산합니다.'}</p>
+                    : (state.methodReady ? '결제 금액은 서버에서 다시 계산합니다.' : '결제 수단에서 결제할 방법을 고르면 결제하기가 켜져요.')}</p>
                 ${mode === 'cart' ? `<a href="/shop/cart/index.html" class="text-link" style="margin-top:16px"><span aria-hidden="true">${icon('arrow-left')}</span> 장바구니로 돌아가기</a>` : ''}`
             document.getElementById('retry-quote')?.addEventListener('click', refreshQuote)
             document.getElementById('pay').addEventListener('click', pay)
@@ -223,17 +260,16 @@
                 sessionStorage.setItem(`bootpay_shop_checkout:${order.order_id}`, JSON.stringify({ mode, items }))
 
                 const pg = await loadPgClient()
-                Bootpay.setEnvironmentMode(pg.mode)
-                const response = await Bootpay.requestPayment({
+                // 결제수단은 위젯에서 고른 것으로 결제한다 (pg · method 를 따로 넘기지 않는다)
+                const response = await BootpayWidget.requestPayment({
                     client_key: pg.clientKey,
                     price: order.price,
                     order_name: order.order_name,
                     order_id: order.order_id,
-                    method: order.method || 'card',
                     user: { id: user.id, username: user.username, phone: user.phone, email: user.email },
                     extra: { open_type: 'iframe', display_error_result: true }
                 })
-                if (response.event !== 'done' && response.event !== 'issued') return
+                if (response?.event !== 'done' && response?.event !== 'issued') return
 
                 const receiptId = response.data?.receipt_id || response.receipt_id || ''
                 const params = new URLSearchParams({ order_id: order.order_id })

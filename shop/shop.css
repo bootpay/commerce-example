@@ -359,3 +359,9 @@ ul { list-style: none; }
 @media (max-width: 760px) {
   .depositor-box { padding: 16px 16px 14px; }
 }
+
+/* 결제위젯 — 주문서 결제 수단 칸 안 (shop/orders/new.html) */
+#card-widget-fields { margin-top: 12px; }
+.payment-widget { min-height: 120px; }
+#widget-help { display: block; margin-top: 6px; color: var(--danger, #c0392b); }
+#widget-help:empty { display: none; }
