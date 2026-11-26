@@ -14,28 +14,24 @@ const corsHeaders = {
     'Content-Type': 'application/json'
 }
 
-// 환경별 Bootpay REST 키 (private_key 는 절대 클라이언트로 노출하지 않을 것)
+// 환경별 Bootpay REST 키 — Pages secret 에서 읽는다(코드에 두지 않는다. 공개 저장소다)
+//   운영 · 스테이지: BOOTPAY_REST_APP_ID · BOOTPAY_REST_PRIVATE_KEY
+//   개발:           BOOTPAY_REST_APP_ID_DEVELOPMENT · BOOTPAY_REST_PRIVATE_KEY_DEVELOPMENT
 // application_id 는 REST 키여야 한다 (WEB/client application_id 와 다름)
-const ENV_CONFIG = {
-    development: {
-        application_id: '692682dfb2084136e29ac1dc',
-        private_key: 'vz63xmu7p7Vs90yHNuggDiQYPFZVWkUZ8JJFwcBDPsI=',
-        api_base: 'https://dev-api.bootpay.co.kr'
-    },
-    stage: {
-        application_id: '6927d523472c3a791b6250d0',
-        private_key: 'FUstljVVgv2P5733quhf+ZaZZbU8tKGMptfGrcPb1jI=',
-        api_base: 'https://stage-api.bootpay.co.kr'
-    },
-    production: {
-        application_id: '6927d523472c3a791b6250d0',
-        private_key: 'FUstljVVgv2P5733quhf+ZaZZbU8tKGMptfGrcPb1jI=',
-        api_base: 'https://api.bootpay.co.kr'
-    }
+const API_BASE = {
+    development: 'https://dev-api.bootpay.co.kr',
+    stage: 'https://stage-api.bootpay.co.kr',
+    production: 'https://api.bootpay.co.kr'
 }
 
-function getConfig(env) {
-    return ENV_CONFIG[env] || ENV_CONFIG.production
+function getConfig(env, vars) {
+    const name = API_BASE[env] ? env : 'production'
+    const dev = name === 'development'
+    return {
+        application_id: dev ? vars.BOOTPAY_REST_APP_ID_DEVELOPMENT : vars.BOOTPAY_REST_APP_ID,
+        private_key: dev ? vars.BOOTPAY_REST_PRIVATE_KEY_DEVELOPMENT : vars.BOOTPAY_REST_PRIVATE_KEY,
+        api_base: API_BASE[name]
+    }
 }
 
 export async function onRequestOptions() {
@@ -54,7 +50,13 @@ export async function onRequestPost(context) {
             }), { status: 400, headers: corsHeaders })
         }
 
-        const config = getConfig(env)
+        const config = getConfig(env, context.env || {})
+        if (!config.application_id || !config.private_key) {
+            return new Response(JSON.stringify({
+                success: false,
+                message: 'REST 키가 설정되지 않았습니다 (BOOTPAY_REST_APP_ID · BOOTPAY_REST_PRIVATE_KEY).'
+            }), { status: 500, headers: corsHeaders })
+        }
         const apiBase = config.api_base
 
         // 1. access_token 발급 (REST application_id + private_key)

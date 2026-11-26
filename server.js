@@ -318,9 +318,14 @@ app.post('/api/user-token', async (req, res) => {
             })
         }
 
+        // REST 키는 환경변수로만 받는다(공개 저장소라 코드에 두지 않는다)
+        const restAppId = process.env.BOOTPAY_REST_APP_ID || process.env.BOOTPAY_APPLICATION_ID
+        if (!restAppId || !process.env.BOOTPAY_PRIVATE_KEY) {
+            return res.status(500).json({ success: false, message: 'BOOTPAY_REST_APP_ID · BOOTPAY_PRIVATE_KEY 환경변수가 없습니다.' })
+        }
         Bootpay.setConfiguration({
-            application_id: process.env.BOOTPAY_APPLICATION_ID || '692682dfb2084136e29ac1dc',
-            private_key: process.env.BOOTPAY_PRIVATE_KEY || 'vz63xmu7p7Vs90yHNuggDiQYPFZVWkUZ8JJFwcBDPsI='
+            application_id: restAppId,
+            private_key: process.env.BOOTPAY_PRIVATE_KEY
         })
 
         await Bootpay.getAccessToken()

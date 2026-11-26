@@ -6,7 +6,9 @@ import { parseEnv } from 'node:util'
 
 // .env.local 은 gitignore 대상이다 (bootpay-mcp 로 발급한 프로젝트 키 등). 뒤에 읽은 파일이 이긴다.
 const ENV_FILES = ['.env.development', '.env.local']
-const KEYS = ['BOOTPAY_CLIENT_KEY', 'BOOTPAY_SECRET_KEY', 'BOOTPAY_MODE', 'BOOTPAY_SECRET_KEY_DEVELOPMENT', 'BOOTPAY_SECRET_KEY_STAGE', 'BOOTPAY_SECRET_KEY_PRODUCTION',
+const KEYS = ['BOOTPAY_CLIENT_KEY', 'BOOTPAY_SECRET_KEY', 'BOOTPAY_MODE',
+    // 브랜드페이 회원 토큰(user_token) — REST 키 (functions/api/user-token.js)
+    'BOOTPAY_REST_APP_ID', 'BOOTPAY_REST_PRIVATE_KEY', 'BOOTPAY_REST_APP_ID_DEVELOPMENT', 'BOOTPAY_REST_PRIVATE_KEY_DEVELOPMENT', 'BOOTPAY_SECRET_KEY_DEVELOPMENT', 'BOOTPAY_SECRET_KEY_STAGE', 'BOOTPAY_SECRET_KEY_PRODUCTION',
     // 무통장 입금(뱅크알람) — Commerce 키 · 판매자 계좌 · 웹훅을 받을 공개 주소
     'BOOTPAY_COMMERCE_CLIENT_KEY', 'BOOTPAY_COMMERCE_SECRET_KEY', 'BOOTPAY_COMMERCE_API_BASE', 'SHOP_BANK_NAME', 'SHOP_BANK_ACCOUNT', 'SHOP_BANK_HOLDER', 'SHOP_PUBLIC_URL', 'SHOP_WEBHOOK_SECRET',
     // 알림톡 웹훅 서명 키 (관리자 › 메시지 설정 › 웹훅)
